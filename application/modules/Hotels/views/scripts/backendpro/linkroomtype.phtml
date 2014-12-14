@@ -1,0 +1,238 @@
+<?php
+echo $this->headLink()->setStylesheet($this->baseUrl().'/application/modules/Administrator/layouts/scripts/css/scroll.css'); 
+echo $this->headScript()->setFile($this->baseUrl().'/application/modules/Administrator/layouts/scripts/vendor/scripts/js/jquery.tinyscrollbar.js');
+?>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	$('#scrollbar1').tinyscrollbar();
+	
+	var settingObj = {
+						form_action : {
+										form_id: 'formLink',
+										hasTinyMCE: false,
+										common_msg_field_id: 'actionMessage',
+										dialog_container_id:	'dialog_container',
+										dialog_progressbar_id:	'progressbar',
+										extra_field_for_reset: [],
+										extra_function_for_reset: function(){},										
+								},					
+					messages: {
+									display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+									empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+									page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+									of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+									itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+									first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+									previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+									next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+									last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+									refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+									
+									common_msg_dialog_id 		:	'dialog_msg',
+									common_confirn_dialog_id	:	'dialog-confirm',
+									common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+									common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+									common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",										
+									common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+									common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+									common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+									common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+									common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>"
+								}
+					};
+	
+	floatingbar('#floatingbar',"#button_top_bar",null);		
+	initializeFunctions();
+	
+		
+	$('a.reset_btn').click(function() {			
+		 commonResetFormFields(settingObj);	
+		 commonRemoveFormError(settingObj);	
+	});
+	
+	function getScrollbarData()
+	{
+		var fieldObj = {};
+		
+		var id_arr = new Array();
+		$.each($('#scrollbar1').find('div.ui-state-active'), function(index) {	
+				id_arr[index] = $(this).attr('rel');
+		});		
+		fieldObj['id_str'] = id_arr.join(',');
+		return fieldObj;
+	}
+	
+	$('a.save_link_btn').click(function() {			
+			
+			var formData = getScrollbarData();	
+				formData.id = "<?php echo $this->hotels_info['id']; ?>";
+		if(formData.id_str == '' || formData.id_str == null)
+		{	
+			var msg = "<?php echo $this->translator->translator('hotels_selected_err'); ?>";
+			commonMsgDialog(settingObj, msg)
+		}
+		else
+		{			
+			$.ajax({
+					url: "<?php echo $this->url( array('module' => 'Hotels','controller' => 'backendpro', 'action'     => 'linkroomtype' ), 'adminrout',    true) ?>",
+					type: 'POST',
+					beforeSend: function(){						
+							commonRemoveFormError(settingObj);
+							commonOpenLoaderDialog(settingObj);				
+						 },
+					data: formData,
+					success: function(response){
+						//alert(response);					
+						var json_arr = eval("("+response+")");					
+						commonCloseLoaderDialog(settingObj);					
+						if(json_arr.status == 'ok')
+						{
+							$('#actionMessage').html(succMsgDesign(json_arr.msg));											
+						}
+						else if(json_arr.status == 'errV')
+						{
+							$('#actionMessage').html(errMsgDesign("<?php echo $this->translator->translator('common_err'); ?>"));
+													
+							for(var i= 0; i < json_arr.msg.length; i++)
+							{
+								commonAddFormError(json_arr.msg[i].key,json_arr.msg[i].value);							
+							}
+						}
+						else
+						{
+							$('#actionMessage').html(errMsgDesign(json_arr.msg));
+						}
+					},
+					error: function(xhr, status, error){
+						commonCloseLoaderDialog(settingObj);
+						var msg = "Error! " + xhr.status + " " + error;
+						$('#actionMessage').html(errMsgDesign(msg));
+					}
+			});
+		}
+	});
+	
+	
+	
+});
+
+function initializeFunctions()
+{	
+	$("div.scroll-content-item").hover(
+	  function () {	  
+	  	$(this).removeClass('ui-state-default');
+		$(this).addClass("ui-state-hover");		
+	  },
+	  function () {
+		$(this).removeClass('ui-state-hover');
+		$(this).addClass("ui-state-default");
+	  }
+	);	
+	$("div.scroll-content-item").click(function () {	
+		$(this).toggleClass("ui-state-active");	
+	});
+}
+</script>
+
+<div id="container">
+<?php if (!$this->allow()) : ?>
+	<div class="grid_12 t_a_bottom">
+		<?php echo $this->translator->translator('Member_Access_deny_desc'); ?>
+	</div>
+<?php else : ?>
+
+<div class="title-container">
+	<div class="hotels-room-type-link"><h1><?php echo $this->translator->translator('hotels_link_to_room_type_title'); ?></h1></div>
+    
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'backendpro', 'action'     => 'list' , 'group_id' => $this->hotels_info['group_id'] ), 'adminrout',    true) ?>" class="back_btn_link"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('common_reset'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="save_link_btn"><span class="icon save"><?php echo $this->translator->translator('hotels_room_type_edit_page_save'); ?></span></a></span>
+    </div>
+</div>
+<div id="button_top_bar"></div>
+<div class="content-container">
+	<form name="formLink" id="formLink" method="post" >
+    	<div id="actionMessage"></div>
+    	<div class="hotel-link">
+        	<div class="link-row">
+            	<div class="link-col link-heading">
+               		<?php echo $this->translator->translator('hotels_link_to_room_type_left_desc'); ?>
+                </div>
+                <div class="link-col">
+                	&nbsp;
+                </div>
+                <div class="link-col link-heading">
+               		<?php echo $this->translator->translator('hotels_link_to_room_type_right_desc', $this->escape($this->hotels_info['hotels_name'])); ?>
+                </div>
+            </div>
+            
+            <div class="link-row">
+            	<div class="link-col">
+               		&nbsp;
+                </div>
+                <div class="link-col">
+                	&nbsp;
+                </div>
+                <div class="link-col">
+               		&nbsp;
+                </div>
+            </div>
+            
+            <div id="generalInfo" class="link-row">
+            	<div class="link-col">
+                	<div class="scroll-content-item ui-state-default ui-corner-all" rel="<?php echo $this->hotels_info['id']; ?>"><div class="scroll-content-sub-item1"><img src="data/frontImages/hotels/hotels_image/<?php echo $this->escape($this->hotels_info['hotels_primary_image']) ?>" height="80" width="80" /></div><div class="scroll-content-sub-item"><div class="title"><?php echo $this->escape($this->hotels_info['hotels_name']); ?></div></div></div>
+                </div>
+                
+                <div class="link-col">
+                	<div class="link-hotel">&nbsp;</div>
+                </div>
+                
+                <div class="link-col">
+                	<div id="scrollbar1">
+                        <div class="scrollbar">
+                            <div class="track"><div class="thumb"><div class="end"></div></div></div>
+                        </div>
+                        <div class="viewport">
+                            <div class="overview">
+                            <?php
+							if($this->roomType_info)
+							{
+								$room_id_arr = explode(',',$this->hotels_info['room_type_id']);									
+								foreach($this->roomType_info as $key=>$entry)
+								{											
+									$active_class = (in_array($entry['id'], $room_id_arr)) ? 'ui-state-active' : '';
+							?>
+							<div class="scroll-content-item ui-state-default ui-corner-all <?php echo $active_class; ?>" rel="<?php echo $entry['id']; ?>">
+                            <div class="scroll-content-sub-item1"><img src="data/frontImages/hotels/room_type_image/<?php echo $this->escape($entry['primary_image']) ?>" height="80" width="80" /></div><div class="scroll-content-sub-item"><div class="title"><?php echo $this->escape($entry['room_type']); ?></div></div></div>
+							<?php
+								}
+							}
+							?>			
+                        	</div>
+                    	</div>
+                    </div>
+                </div>
+          	</div>
+		</div>
+	</form>
+</div>
+
+<div id="floatingbar">
+	<h1><?php echo $this->translator->translator('hotels_link_to_room_type_title'); ?></h1>
+    
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'backendpro', 'action'     => 'list' ), 'adminrout',    true) ?>" class="back_btn_link"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('common_reset'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="save_link_btn"><span class="icon save"><?php echo $this->translator->translator('hotels_room_type_edit_page_save'); ?></span></a></span>
+    </div>    
+</div>
+<?php endif; ?>
+
+<div id="dialog_msg" title="<?php echo $this->translator->translator('common_dialog_msg',$this->translator->translator('hotels_link_to_room_type_title')); ?>">
+</div>
+<div id="dialog_container" style="display:none" title="<?php echo $this->translator->translator('common_processing_language'); ?>">
+	<div id="progressbar" ></div>	
+</div>
+</div>

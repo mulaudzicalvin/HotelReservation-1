@@ -1,0 +1,31 @@
+<?php
+	$frontController = Zend_Controller_Front::getInstance();
+	$module = $frontController->getRequest()->getModuleName();
+	$controller = $frontController->getRequest()->getControllerName();
+	$action = $frontController->getRequest()->getActionName();
+	$group_id = $frontController->getRequest()->getParam('group_id');
+	$approve = $frontController->getRequest()->getParam('approve');
+	$room_type = $frontController->getRequest()->getParam('room_type');
+	$entry_by = $frontController->getRequest()->getParam('entry_by');
+	$hotel_id = $frontController->getRequest()->getParam('hotel_id');
+	$max_people = $frontController->getRequest()->getParam('max_people');
+	$descount_price_min = $frontController->getRequest()->getParam('descount_price_min');
+	$descount_price_max = $frontController->getRequest()->getParam('descount_price_max');
+	$room_type_id = $frontController->getRequest()->getParam('room_type_id');
+	$room_name = $frontController->getRequest()->getParam('room_name');
+	$translator = Zend_Registry::get('translator');
+?>
+<?php echo $translator->translator('pagination_results'); ?> <?php echo $this->numbers($this->currentItemCount); ?> - <?php echo $this->numbers($this->current); ?> <?php echo $translator->translator('pagination_of'); ?> <?php echo $this->numbers($this->last); ?></td>
+	<div class="page-no">
+		<?php if (isset($this->previous)): ?><a href="<?php echo $this->url(array('module' => $module,'controller' => $controller,'action' => $action,'group_id' => $group_id, 'approve' => $approve, 'room_type' => $room_type, 'entry_by' => $entry_by, 'hotel_id' => $hotel_id, 'max_people' => $max_people, 'descount_price_min' => $descount_price_min, 'descount_price_max' => $descount_price_max, 'room_type_id' => $room_type_id, 'room_name' => $room_name,'page' => $this->previous),'adminrout',true); ?>" style="text-decoration:none;color:#000000;"><</a><?php else: ?><<?php endif; ?> 
+		<!-- Numbered page links -->
+			<?php foreach ($this->pagesInRange as $page): ?>
+				<?php if ($page != $this->current): ?>
+					<a href="<?php echo $this->url(array('module' => $module,'controller' => $controller,'action' => $action,'group_id' => $group_id, 'approve' => $approve, 'room_type' => $room_type, 'entry_by' => $entry_by, 'hotel_id' => $hotel_id, 'max_people' => $max_people, 'descount_price_min' => $descount_price_min, 'descount_price_max' => $descount_price_max, 'room_type_id' => $room_type_id, 'room_name' => $room_name,'page' => $page),'adminrout',true); ?>" style="text-decoration:none;color:#000000;">[<?php echo $this->numbers($page); ?>]</a>
+				<?php else: ?>
+					<?php echo $this->numbers($page); ?>
+				<?php endif; ?>
+			<?php endforeach; ?>
+			<!-- Next page link -->
+		<?php if (isset($this->next)): ?><a href="<?php echo $this->url(array('module' => $module,'controller' => $controller,'action' => $action,'group_id' => $group_id, 'approve' => $approve, 'room_type' => $room_type, 'entry_by' => $entry_by, 'hotel_id' => $hotel_id, 'max_people' => $max_people, 'descount_price_min' => $descount_price_min, 'descount_price_max' => $descount_price_max, 'room_type_id' => $room_type_id, 'room_name' => $room_name,'page' => $this->next),'adminrout',true); ?>" style="text-decoration:none;color:#000000;">></a><?php else: ?>><?php endif; ?>
+ 	</div>

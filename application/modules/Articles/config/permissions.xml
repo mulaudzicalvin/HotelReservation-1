@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+	<resource name="backend" for="backend" description="Manage Articles" langKey="permisson_articles">
+		<privilege for="dashboard" name="list" description="View the list of Article" langKey="permisson_article_list" />
+		<privilege for="dashboard" name="add" description="Create new Article" langKey="permisson_article_add" />
+		<privilege name="edit" description="Edit a Article" langKey="permisson_article_edit" />
+		<privilege name="delete" description="Delete a Article" langKey="permisson_article_delete" />
+		<privilege name="publish" description="Active Deactive a Article" langKey="permisson_article_activeDeactive" />
+		<privilege name="preview" description="Preview Articles" langKey="permisson_article_preview" />
+	</resource>	
+	<resource name="frontend" for="frontend" description="Frontend Articles" langKey="permisson_frontend_articles">
+		<privilege name="view" description="View the Frontend of Article" langKey="permisson_article_front_view" img="permisson_article_front_view.jpg" />
+		<privilege name="edit" description="Edit the Frontend of Article" langKey="permisson_article_front_edit" img="permisson_article_front_edit.jpg" />
+	</resource>
+	<resource name="members" for="frontend" description="Frontend Members Articles" langKey="permisson_frontend_members_articles">
+		<privilege name="list" description="View the list of articles" langKey="permisson_frontend_members_articles_list" img="permisson_frontend_members_articles_list.jpg" />
+		<privilege name="add" description="Add new article" langKey="permisson_frontend_members_articles_list_add" img="permisson_frontend_members_articles_list_add.jpg" />
+		<privilege name="edit" description="Edit article" langKey="permisson_frontend_members_articles_list_edit" img="permisson_frontend_members_articles_list_edit.jpg" />
+	</resource>
+	<dbtable name="articles" for="view">
+		<tablefield name="order" />
+		<tablefield name="article_id" />
+		<tablefield name="article_name" />
+		<tablefield name="article_status" />
+	</dbtable>
+	<dbtable name="articles" for="edit">
+		<tablefield name="order" />
+		<tablefield name="article_id" />
+		<tablefield name="article_name" />
+		<tablefield name="article_status" />
+	</dbtable>
+</permissions>

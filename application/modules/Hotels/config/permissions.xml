@@ -1,0 +1,174 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<permissions>
+	<resource name="backend" for="backend" description="Manage Hotels Category" langKey="permisson_hotels_category">
+		<privilege for="dashboard" name="list" description="View the list of Category" langKey="permisson_hotels_category_list" />
+		<privilege for="dashboard" name="add" description="Create new Category" langKey="permisson_hotels_category_add" />
+		<privilege name="edit" description="Edit Category" langKey="permisson_hotels_category_edit" />
+		<privilege name="delete" description="Delete a Category" langKey="permisson_hotels_category_delete" />
+		<privilege name="featured" description="Featured Category" langKey="permisson_hotels_category_featured" />
+		<privilege name="publish" description="Active Deactive a Category" langKey="permisson_hotels_category_activeDeactive" />
+	</resource>
+	<resource name="backendgrp" for="backend" description="Manage Hotels Group" langKey="permisson_hotels_group">
+		<privilege for="dashboard" name="listgrp" description="View the list of Hotels Group" langKey="permisson_hotels_group_list" />
+		<privilege for="dashboard" name="addgrp" description="Create new Hotels Group" langKey="permisson_hotels_group_add" />
+		<privilege name="editgrp" description="Edit a Hotels Group" langKey="permisson_hotels_group_edit" />
+		<privilege name="deletegrp" description="Delete a Hotels Group" langKey="permisson_hotels_group_delete" />
+		<privilege name="publishgrp" description="Active Deactive a Hotels Group" langKey="permisson_hotels_group_activeDeactive" />
+	</resource>	
+	
+	<resource name="backendpro" for="backend" description="Manage Hotels" langKey="permisson_hotels">
+		<privilege for="dashboard" name="list" description="View the list of Hotels" langKey="permisson_hotels_list" />
+		<privilege for="dashboard" name="add" description="Create new Hotels" langKey="permisson_hotels_add" />
+		<privilege name="edit" description="Edit Hotels" langKey="permisson_hotels_edit" />
+		<privilege name="delete" description="Delete a Hotels" langKey="permisson_hotels_delete" />
+		<privilege name="featured" description="Featured Hotels" langKey="permisson_hotels_featured" />
+		<privilege name="publish" description="Active Deactive a Hotels" langKey="permisson_hotels_activeDeactive" />
+		<privilege name="search" description="Search Hotels" langKey="permisson_hotels_search" />		
+		<privilege for="dashboard" name="saved" description="Saved Hotels List" langKey="permisson_hotels_saved" />
+		<privilege name="deletesaved" description="Saved Hotels Delete" langKey="permisson_hotels_saved_delete" />
+		<privilege name="linkroomtype" description="Link to Room Type" langKey="permisson_hotels_link_to_room_type" />
+	</resource>
+	
+	<resource name="backendtype" for="backend" description="Manage Business Type" langKey="permisson_hotels_type">
+		<privilege for="dashboard" name="list" description="View list of Business Type" langKey="permisson_hotels_type_list" />
+		<privilege  name="add" description="Create new Business Type" langKey="permisson_hotels_type_add" />
+		<privilege name="edit" description="Edit Business Type" langKey="permisson_hotels_type_edit" />
+		<privilege name="delete" description="Delete Business Type" langKey="permisson_hotels_type_delete" />
+	</resource>
+	
+	<resource name="backendroom" for="backend" description="Manage Room Type" langKey="permisson_room_type">
+		<privilege for="dashboard" name="list" description="View list of Room Type" langKey="permisson_room_type_list" />
+		<privilege for="dashboard" name="add" description="Create new Room Type" langKey="permisson_hotels_room_type_add" />
+		<privilege name="edit" description="Edit Room Type" langKey="permisson_hotels_room_type_edit" />
+		<privilege name="delete" description="Delete  Room Type(s)" langKey="permisson_hotels_room_type_delete" />
+		<privilege name="linkhotels" description="Link to Hotels" langKey="permisson_hotels_room_type_link_to_hotels" />
+	</resource>
+	
+	<resource name="backendrooms" for="backend" description="Manage Room" langKey="permisson_room">
+		<privilege for="dashboard" name="list" description="View list of Room" langKey="permisson_room_list" />
+		<privilege for="dashboard" name="add" description="Create new Room" langKey="permisson_hotels_room_add" />
+		<privilege name="edit" description="Edit Room" langKey="permisson_hotels_room_edit" />
+		<privilege name="delete" description="Delete Room(s)" langKey="permisson_hotels_room_delete" />
+	</resource>
+	
+	<resource name="backendstate" for="backend" description="Manage States" langKey="permisson_hotels_state">
+		<privilege for="dashboard" name="list" description="View list of States" langKey="permisson_hotels_state_list" />
+		<privilege name="add" description="Create new States" langKey="permisson_hotels_state_add" />
+		<privilege name="edit" description="Edit States" langKey="permisson_hotels_state_edit" />
+		<privilege name="delete" description="Delete States" langKey="permisson_hotels_state_delete" />
+	</resource>
+	
+	<resource name="backendarea" for="backend" description="Manage Areas" langKey="permisson_hotels_area">
+		<privilege for="dashboard" name="list" description="View list of Areas" langKey="permisson_hotels_area_list" />
+		<privilege name="add" description="Create new Areas" langKey="permisson_hotels_area_add" />
+		<privilege name="edit" description="Edit Areas" langKey="permisson_hotels_area_edit" />
+		<privilege name="delete" description="Delete Areas" langKey="permisson_hotels_area_delete" />
+	</resource>
+	
+	<resource name="api" for="backend" description="Hotel Api Settings" langKey="permisson_hotels_api">
+		<privilege for="dashboard" name="list" description="Api Settings List" langKey="permisson_hotels_api_list" />	
+		<privilege name="update" description="Api Settings" langKey="permisson_hotels_api" />	
+		<privilege name="publish" description="Publish/Unpublish Api" langKey="permisson_hotels_api_publish" />	
+	</resource>
+	
+	<resource name="backendexpedia" for="backend" description="Expedia Itineraries management" langKey="hotels_api_expedia_backend_itinerary_mgmt">
+		<privilege for="dashboard" name="itinerary" description="View list of Itineraries" langKey="hotels_api_expedia_backend_itinerary_mgmt" />
+		<privilege name="view" description="View itineraries" langKey="hotels_api_expedia_backend_itinerary_list_view" />
+		<privilege name="cancel" description="Cancel an itinerary" langKey="hotels_api_expedia_backend_itinerary_list_cancel" />
+		<privilege name="delete" description="Delete an itinerary" langKey="hotels_api_expedia_backend_itinerary_list_delete" />
+	</resource>
+	
+	<resource name="frontend" for="frontend" description="Frontend Hotels" langKey="permisson_frontend_hotels">
+		<privilege name="home" description="Home page of Hotels module" langKey="permisson_hotels_front_home" img="permisson_hotels_front_home.jpg" />
+		<privilege name="group" description="View Hotels list of Group" langKey="permisson_hotels_front_group_list" img="permisson_hotels_front_group_list.jpg" />
+		<privilege name="view" description="View the list of Hotels by type" langKey="permisson_hotels_front_list" img="permisson_hotels_front_list.jpg" />
+		<privilege name="category" description="View the list of Hotels by category" langKey="permisson_hotels_front_list_by_category" img="permisson_hotels_front_list_by_category.jpg" />
+		<privilege name="lastdeal" description="Last Minute Deal Hotel List" langKey="permisson_hotels_front_list_by_lastdeal" img="permisson_hotels_front_list_by_lastdeal.jpg" />
+		<privilege name="details" description="View the Hotels Details" langKey="permisson_hotels_front_details" img="permisson_hotels_front_details.jpg" />
+		<privilege name="itinerarylist" description="Itinerary page of Hotels" langKey="permisson_hotels_front_itinerary" img="permisson_hotels_front_itinerary.jpg" />		
+	</resource>
+	
+	<resource name="emails" for="frontend" description="Frontend Email To Friend" langKey="permisson_frontend_email_to_friend">
+		<privilege name="friend" description="View Email To Friend Form" langKey="permisson_friend_form_email_to_friend"  img="permisson_friend_form_email_to_friend.jpg" />
+		<privilege name="owner" description="View Contact Owner" langKey="permisson_contact_owner_form"  img="permisson_contact_owner_form.jpg" />
+		<privilege name="appointment" description="View Appointment Form" langKey="permisson_appointment_form"  img="permisson_appointment_form.jpg" />
+	</resource>
+	
+	<resource name="search" for="frontend" description="Advanced Search" langKey="permisson_frontend_advanced_search">
+		<privilege name="items" description="View Advanced Search" langKey="permisson_frontend_view_advanced_search"  img="permisson_frontend_view_advanced_search.jpg" />
+	</resource>
+	
+	<resource name="wego" for="frontend" description="Wego Hotel Api" langKey="permisson_frontend_wego_api">
+		<privilege name="items" description="View Wego Hotel Search" langKey="permisson_frontend_view_wego_search"  img="permisson_frontend_view_wego_search.jpg" />
+	</resource>
+	
+	<resource name="expedia" for="frontend" description="Expedia Affiliate API" langKey="permisson_frontend_expedia_api">
+		<privilege name="index" description="View Expedia Home Page" langKey="permisson_frontend_view_expedia_home"  img="permisson_frontend_view_expedia_search.jpg" />
+		<privilege name="items" description="View Expedia Affiliate Search" langKey="permisson_frontend_view_expedia_search"  img="permisson_frontend_view_expedia_search.jpg" />
+		<privilege name="reservation" description="Expedia Affiliate Reservation" langKey="permisson_frontend_view_expedia_reservation"  img="permisson_frontend_view_expedia_search.jpg" />
+	</resource>
+	
+	<resource name="members" for="frontend" description="Frontend Members Hotels" langKey="permisson_frontend_members_hotels">
+		<privilege name="list" description="View the list of members added hotels" langKey="permisson_frontend_members_hotels_list" img="permisson_frontend_members_hotels_list.jpg" />
+		<privilege name="add" description="Add new hotels by members" langKey="permisson_frontend_members_hotels_list_add" img="permisson_frontend_members_hotels_list_add.jpg" />
+		<privilege name="edit" description="Edit hotels by members" langKey="permisson_frontend_members_hotels_list_edit" img="permisson_frontend_members_hotels_list_edit.jpg" />
+		<privilege name="listroomtype" description="View the list of members added hotels room type" langKey="permisson_frontend_members_hotels_room_type_list" img="permisson_frontend_members_hotels_room_type_list.jpg" />
+		<privilege name="addroomtype" description="Add new room type by members" langKey="permisson_frontend_members_hotels_room_type_list_add" img="permisson_frontend_members_hotels_room_type_list_add.jpg" />
+		<privilege name="editroomtype" description="Edit room type by members" langKey="permisson_frontend_members_hotels_room_type_list_edit" img="permisson_frontend_members_hotels_room_type_list_edit.jpg" />
+		<privilege name="listroom" description="View the list of members added hotels room" langKey="permisson_frontend_members_hotels_room_list" img="permisson_frontend_members_hotels_room_list.jpg" />
+		<privilege name="addroom" description="Add new room by members" langKey="permisson_frontend_members_hotels_room_list_add" img="permisson_frontend_members_hotels_room_list_add.jpg" />
+		<privilege name="editroom" description="Edit room by members" langKey="permisson_frontend_members_hotels_room_list_edit" img="permisson_frontend_members_hotels_room_list_edit.jpg" />
+		<privilege name="favorite" description="Favorite Hotels Saved by members" langKey="permisson_frontend_members_hotels_favorite_list" img="permisson_frontend_members_hotels_favorite_list.jpg" />
+	</resource>
+	
+	<dbtable name="hotels_group" for="home">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="group_name" />
+		<tablefield name="active" />
+	</dbtable>
+	<dbtable name="hotels_group" for="items">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="group_name" />
+		<tablefield name="active" />
+	</dbtable>
+	<dbtable name="hotels_business_type" for="view">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="business_type" />
+	</dbtable>
+	<dbtable name="hotels_category" for="category">
+		<tablefield name="category_order" />
+		<tablefield name="id" />
+		<tablefield name="category_name" />
+		<tablefield name="active" />
+	</dbtable>
+	<dbtable name="hotels_group" for="group">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="group_name" />
+		<tablefield name="active" />
+	</dbtable>
+	<dbtable name="hotels_page" for="details">
+		<tablefield name="hotels_order" />
+		<tablefield name="id" />
+		<tablefield name="hotels_name" />
+		<tablefield name="active" />
+	</dbtable>
+	<dbtable name="forms" for="friend">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="form_name" />
+	</dbtable>
+	<dbtable name="forms" for="owner">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="form_name" />
+	</dbtable>
+	<dbtable name="forms" for="appointment">
+		<tablefield name="id" />
+		<tablefield name="id" />
+		<tablefield name="form_name" />
+	</dbtable>
+</permissions>

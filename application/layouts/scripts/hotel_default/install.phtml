@@ -1,0 +1,19 @@
+<?php echo $this->doctype(); ?> 
+<html> 
+<head>  
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <base href="<?php echo $this->serverUrl().$this->baseUrl().'/'; ?>" />
+  <?php echo $this->headMeta(); ?>
+  <?php echo $this->headTitle(); ?>
+   <?php   	
+   	$version = new Eicra_License_Version();
+	echo $this->headLink()->setStylesheet('css/installer/window.css'); 	
+	echo $this->headLink()->setStylesheet('css/installer/setup.css'); 
+	echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/jui-'.$version->getJQueryVersion().'/ui-lightness/jquery-'.$version->getJQueryVersion().'.min.js');  
+  ?>
+	
+</head> 
+<body  bgcolor="#f4f4f4">			
+		<?php echo $this->layout()->content ?>		
+</body>
+</html>

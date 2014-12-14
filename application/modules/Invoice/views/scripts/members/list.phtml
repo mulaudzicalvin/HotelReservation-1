@@ -1,0 +1,694 @@
+<?php if (!$this->allow('list')) : ?>
+	<h1><?php echo $this->translator->translator('Member_Access_deny_desc'); ?></h1>
+<?php else :
+$headTitle =  $this->translator->translator('invoice_frontend_list_page_name'); 
+$this->headTitle()->headTitle($headTitle,'SET'); 
+
+$locale_direction = Eicra_Global_Variable::getSession()->site_direction;
+$locale = Eicra_Global_Variable::getSession()->sess_lang;
+
+$global_conf = Zend_Registry::get('global_conf');
+$currency = new Zend_Currency($global_conf['default_locale']);
+$currencySymbol = $currency->getSymbol();
+$currencyShort = $currency->getShortName();
+
+$permission_arr = array('edit_enable' => $this->allow('edit','members','Invoice'), 'paid_enable' => $this->allow('paid','backend','Invoice'), 'delete_enable' => $this->allow('delete','backend','Invoice'), 'details_enable' => $this->allow('details','members','Invoice'), 'view_enable' => $this->allow('view','backend','Invoice'));	
+$param_status = ($this->status) ? ($this->status) : null;
+?>
+<script type="text/javascript">
+var window_box = '';
+var settingObj = {
+						grid_id : 'grid',
+						dest_url : "<?php echo $this->url(); ?>",
+						pageSize : '<?php echo Eicra_Global_Variable::getSession()->viewPageNum; ?>',
+						page: '<?php echo ($this->posted_data['page']) ? $this->posted_data['page'] : ''; ?>',	
+						calendar: {
+							culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+							value: ''
+						},					
+						search_action: {
+							search_form_id : 'searchForm',
+							search_form_btn : 'search_btn',
+							hasTinyMCE 	: false
+						},
+						common_action : {
+								permission_arr : {
+										publish_enable 	: 	'<?php echo $permission_arr['publish_enable']; ?>',
+										delete_enable	:	'<?php echo $permission_arr['delete_enable']; ?>',
+										paid_enable		:	'<?php echo $permission_arr['paid_enable']; ?>',
+								},
+																
+								delete_multi_dest_url		:	"<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action'     => 'deleteall' ), 'adminrout',    true); ?>",
+								
+								toolbar_button_loader		:	'<span class="icon loader"></span>',
+								ajax_loader_link			:	"application/modules/Administrator/layouts/scripts/images/loader/ajax_loader.gif",
+						
+								multi_toolbar_action		: [
+																	{
+																		multi_toolbar_action_caller_id				:	"a.status_btn",
+																		multi_toolbar_action_dest_url				:	"<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action'     => 'paid' ), 'adminrout',    true) ?>",
+																		multi_toolbar_action_dest_data_field 		: 	['id_st', 'paction'],
+																		multi_toolbar_action_data_return_field 		: 	['active'],
+																		multi_toolbar_action_data_permission_field 	: 	['paid_enable'],
+																		multi_toolbar_action_dest_data_paction 		: 	[
+																															
+																															{
+																																'paction' : 'cancel', 'cols'	: [	
+																																									{'num': 9, 'title' : "<?php echo html_entity_decode($this->translator->translator("common_cancelled_language"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "", 'children' : '' },
+																																									{
+																																										'num': 7, 'title' : "<?php echo html_entity_decode($this->translator->translator("invoice_list_invoice_now_payable_unpaid_language"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "", 'children' : "span:first", 
+																																										'action'	: function(checkObj, col_arr){
+																																												$(checkObj).parents("tr:first").children("td:nth-child("+(col_arr.num+1)+")").html('<input class="full_payment" />');
+																																												kendoComboBox(settingObj);
+																																											} 
+																																									}
+																																								  ]
+																															},
+																															{
+																																'paction' : 'paid', 'cols'		: [
+																																									{'num': 9, 'title' : "<?php echo html_entity_decode($this->translator->translator("common_paid_language"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "", 'children' : ''},
+																																									{
+																																										'num': 7, 'title' : "<?php echo html_entity_decode($this->translator->translator("invoice_list_invoice_now_payable_paid_language"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "", 'children' : "span:first", 
+																																										'action'	: function(checkObj, col_arr){	
+																																												var action_path = 	$(checkObj).parents("tr:first").children("td:nth-child("+(col_arr.num+1)+")");																																										
+																																												if(action_path.find("input.full_payment").is('input')){ action_path.find("input.full_payment").data("kendoDropDownList").destroy(); }
+																																												action_path.html("");
+																																											}
+																																									}
+																																							  	  ]																																					
+																															},
+																															{
+																																'paction' : 'unpaid',  'cols'	: [	
+																																									{'num': 9, 'title' : "<?php echo html_entity_decode($this->translator->translator("common_unpaid_language"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "", 'children' : ''},
+																																									{
+																																										'num': 7, 'title' : "<?php echo html_entity_decode($this->translator->translator("invoice_list_invoice_now_payable_unpaid_language"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "", 'children' : "span:first", 
+																																										'action'	: function(checkObj, col_arr){
+																																												$(checkObj).parents("tr:first").children("td:nth-child("+(col_arr.num+1)+")").html('<input class="full_payment" />');
+																																												kendoComboBox(settingObj);
+																																											}
+																																									}
+																																								  ]
+																															}
+																														]															
+																	}
+																]
+						},
+						windowbox: {
+							windowbox_id: '#dialog_window',
+							windowbox_settings:{
+								width	: '300px',					
+								actions: ["Refresh", "Minimize", "Maximize", "Close"],
+								title: "<?php echo html_entity_decode($this->translator->translator("common_dialog_msg",$this->translator->translator("invoice_list_invoice_payment")), ENT_QUOTES, 'UTF-8'); ?>",
+								modal: true,
+								refresh: function (e) {													 
+									 UPay_Pay();
+								},
+								close: function (e) {																						 
+									 if(window_box){ window_box.data("kendoWindow").content("&nbsp;"); }
+								},
+								error: function (e) {													 
+									 commonMsgDialog(settingObj, e.xhr.responseText);
+								}
+							}
+						},
+						combobox: {
+							combobox_id: 'input.full_payment',
+							combobox_settings:{
+									autoBind: false,
+								 	dataTextField: "gwname",
+									dataValueField: "id",
+									optionLabel: "<?php echo html_entity_decode($this->translator->translator("common_select"), ENT_QUOTES, 'UTF-8'); ?>",
+									template: '# if(data.id){ # <img src=\"data/frontImages/gateway/gateway_logo/${data.logo}\" width=\"115\" alt=\"${data.gwname}\" title=\"${data.gwname}\" /> # }else{ # <?php echo html_entity_decode($this->translator->translator("common_select"), ENT_QUOTES, 'UTF-8'); ?> # } #',
+									dataSource: {
+												type: "json",
+												schema: {
+													  data:	'gateway_list'
+												  },  
+												transport: {
+														read: {
+															type: "POST",
+							  								dataType: "json",	
+															url: "<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action' => 'gateway' ), 'adminrout',    true); ?>"
+														}
+													}
+									},
+									index: 0,
+									change: function(e) {										
+										var payment_id	= 	e.sender.element.val();
+										var invoice_id	= 	e.sender.element.parents('tr:first').find('td>input[type="checkbox"]').val();
+										if(payment_id != null && payment_id != '')
+										{
+											// handle event												
+											window_box = (!window_box) ? kendoWindowBox(settingObj) : window_box;	
+											window_box.data("kendoWindow").setOptions( { width : settingObj.windowbox.windowbox_settings.width } );								
+											window_box.data("kendoWindow").refresh({
+															url: "<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action'     => 'fullpay' ), 'adminrout',    true) ?>",
+															type: 'POST',
+															data: { payment_id: payment_id, invoice_id: invoice_id},
+															template: function(response){ 
+																var json_arr = $.parseJSON(response);													
+																if(json_arr.status == 'ok')
+																{
+																	var payment_link	=	json_arr.payment_data;
+																	var payment_logo	=	json_arr.payment_info.logo;
+																	var input_type		=	json_arr.input_type;
+																	var	html_data		=	'<center><span>';							
+																	html_data			+=	(input_type == 'link') ? '<a href="'+payment_link+'" target="_blank"><img src="data/frontImages/gateway/gateway_logo/'+payment_logo+'" width="140" /></a>' : payment_link;
+																	html_data			+=	'</center></span>';
+																	return html_data;																														
+																}
+																else
+																{
+																	return json_arr.msg;															
+																}
+															}
+														}).center().open();	
+										}
+									}
+							}
+						},
+						search_data : {},
+						batch:		false,
+						editable:	false,
+						scrollable: true,
+						detailInit:	false,
+						dataBound: function(e) {									
+								var self = this;		
+								kendoComboBox(settingObj);	
+								viewInvoice();					                      
+                        },
+						filterable:{
+
+						  extra: true,
+						  messages: {
+							  info: "<?php echo $this->translator->translator("portfolio_filter_messages_info", '', 'Portfolio'); ?>", // sets the text on top of the filter menu
+							  filter: "<?php echo $this->translator->translator("portfolio_filter_messages_filter", '', 'Portfolio'); ?>", // sets the text for the "Filter" button
+							  clear: "<?php echo $this->translator->translator("portfolio_filter_messages_clear", '', 'Portfolio'); ?>", // sets the text for the "Clear" button
+					  
+							  // when filtering boolean numbers
+							  isTrue: "<?php echo $this->translator->translator("portfolio_filter_messages_isTrue", '', 'Portfolio'); ?>", // sets the text for "isTrue" radio button
+							  isFalse: "<?php echo $this->translator->translator("portfolio_filter_messages_isFalse", '', 'Portfolio'); ?>", // sets the text for "isFalse" radio button
+					  
+							  //changes the text of the "And" and "Or" of the filter menu
+							  and: "<?php echo $this->translator->translator("portfolio_filter_messages_and", '', 'Portfolio'); ?>",
+							  or: "<?php echo $this->translator->translator("portfolio_filter_messages_or", '', 'Portfolio'); ?>"
+						  },
+						  operators: {
+							  string: {
+								  startswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_startswith", '', 'Portfolio'); ?>",
+								  contains: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_contains", '', 'Portfolio'); ?>",
+								  doesnotcontain: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_doesnotcontain", '', 'Portfolio'); ?>",
+								  endswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_endswith", '', 'Portfolio'); ?>",
+								  eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_eq", '', 'Portfolio'); ?>",
+								  neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_neq", '', 'Portfolio'); ?>"
+							  },
+							  number: {
+								  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_neq", '', 'Portfolio'); ?>",
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lt", '', 'Portfolio'); ?>"
+							  },
+							  date: {
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_lt", '', 'Portfolio'); ?>",
+							  	  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_neq", '', 'Portfolio'); ?>"
+							  },
+							  enums: {
+									eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_enum_eq", '', 'Portfolio'); ?>",
+									neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_enum_neq", '', 'Portfolio'); ?>"
+							  }
+						  }
+						},
+						model: {
+                                    fields: {
+                                        id: { type: "number" },
+                                        full_name: { type: "string" },
+                                        total_amount: { type: "number" },
+                                        now_payable: { type: "number" },
+                                        invoice_create_date: { type: "date" },
+										status: { type: "enums" },
+										common_action: { editable: false }
+                                    }
+                                },
+						<?php if ($permission_arr['paid_enable'] ||  $permission_arr['delete_enable']) : ?>					
+						toolbar: function(e){ return kendo.template($("#toolbar_template").html()); },	
+						<?php endif; ?>						
+						column_fields: [
+											{ field:"checkAll", headerTemplate: '<input type="checkbox" name="checkAll" id="checkAll" class="checkAll_btn"   />',	template: '<input type="checkbox" value="${id}" class="check_btn" />' , width: 28, filterable: false, sortable: false, columnMenu: false},  // For Header : #= Selected ? checked="checked" : "" #       For Body :  # (checkAll) ? checked="checked" :  ""  #  # if(checkAll){ # checked # } #
+											{ 
+												field: "id", 		
+												title: 	"<?php echo $this->translator->translator('invoice_list_invoice_id'); ?>", 
+												width: 80, 
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+															format: "0",
+															min: 0,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}  
+											},
+											{ field: "module_name", title: "<?php echo $this->translator->translator('invoice_list_item_name'); ?>", width: 100 },
+											{ field: "full_name", title: "<?php echo $this->translator->translator('invoice_list_client_name'); ?>", width: 190 },
+											{ 
+												field: "invoice_create_date", 	
+												title:	"<?php echo $this->translator->translator('invoice_list_invoice_date'); ?>",  
+												format: "{0:MM/dd/yyyy}", 
+												template: '<div title="<strong><?php echo html_entity_decode($this->translator->translator('common_date'), ENT_QUOTES, 'UTF-8'); ?> : </strong>${invoice_create_date_format}">#= kendo.toString(invoice_create_date,\'dd/MM/yyyy\') #</div>',
+												width: 100, 
+												attributes:{ 'align' : 'center' },
+												filterable: { 
+													ui: function(element) {
+														kendoDateTimeCalendar(element, settingObj);
+													}
+												}
+											},
+											{ 
+												field: "total_amount", 		
+												title:	"<?php echo $this->translator->translator('invoice_list_invoice_total'); ?>",
+												headerTemplate: "<?php echo html_entity_decode($this->translator->translator("invoice_list_invoice_total"), ENT_QUOTES, 'UTF-8')." ( ".$currencyShort." )"; ?>",
+												template: '<?php echo $currencySymbol; ?> #= total_amount #',
+												width: 105, 
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $global_conf['default_locale']); ?>",
+															format: "c",
+															min: 0,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}
+											},
+											{ 
+												field: "now_payable", 		
+												title:	"<?php echo $this->translator->translator('invoice_list_invoice_now_payable'); ?>",
+												headerTemplate: "<?php echo html_entity_decode($this->translator->translator("invoice_list_invoice_now_payable"), ENT_QUOTES, 'UTF-8')." ( ".$currencyShort." )"; ?>",
+												template: '<?php echo $currencySymbol; ?> #=  now_payable # # if(now_payable){ # #= \'&nbsp;&nbsp;(<span>\' # #= (now_payable_paid_status == 1) ? invoice_now_paid_status_format : invoice_now_unpaid_status_format # #= \'</span>)\' # # } #',
+												width: 150, 
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $global_conf['default_locale']); ?>",
+															format: "c",
+															min: 0,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}
+											},											
+											{ 
+												field: "payment_method", 		
+												title:	"<?php echo $this->translator->translator('invoice_list_invoice_payment'); ?>",
+												width: 170,
+												template : '# if(status != 1){ #<input class="full_payment" /># } #',
+												attributes:{ 'align' : 'center' },
+												filterable: false, 
+												sortable: false,
+												columnMenu: false 
+											},
+											{ 	
+												field: "status", 	
+												title:	"<?php echo $this->translator->translator('payment_status'); ?>", 
+												width: 80,
+												template: '#= invoice_status_format #',
+												attributes:{ 'align' : 'center' },
+												filterable: { 
+													ui: function(element) {
+														element.kendoDropDownList({
+															dataSource: [ { Id: 1, Title: "<?php echo html_entity_decode(strip_tags($this->translator->translator("common_paid_language")), ENT_QUOTES, 'UTF-8'); ?>" }, { Id: 2, Title: "<?php echo html_entity_decode(strip_tags($this->translator->translator("common_unpaid_language")), ENT_QUOTES, 'UTF-8'); ?>" }, { Id: 0, Title: "<?php echo html_entity_decode(strip_tags($this->translator->translator("common_cancelled_language")), ENT_QUOTES, 'UTF-8'); ?>" } ],
+															dataTextField: "Title",
+    														dataValueField: "Id",
+															optionLabel: "<?php echo html_entity_decode($this->translator->translator("common_select"), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}
+											},
+											{ 
+												field: "common_action",	
+												title:	"<?php echo $this->translator->translator('common_action'); ?>", 
+												width: 90, 
+												attributes:{ 'align' : 'center' },
+												template:	'<?php if ($permission_arr['edit_enable']) : ?># if(edit_enable){ # <a href="<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'members', 'action'     => 'edit', 'id' => '' ), 'Members-Invoice-Item-List-Edit/*',    true) ?>/${id}"><img src="application/modules/Administrator/layouts/scripts/images/tools/edit.png" title="<?php echo html_entity_decode($this->translator->translator('common_edit_title'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('common_edit_title'), ENT_QUOTES, 'UTF-8'); ?>" border="0" /></a> # } #<?php endif; ?>'+
+															'<?php if ($permission_arr['details_enable']) : ?>&nbsp;<a href="<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'members', 'action'     => 'details', 'invoice_id' => '' ), 'Members-Invoice-Item-List-Details/*',    true) ?>/${id}"  ><img src="application/modules/Administrator/layouts/scripts/images/tools/view.gif" title="<?php echo html_entity_decode($this->translator->translator('invoice_list_invoice_view_details'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('invoice_list_invoice_view_details'), ENT_QUOTES, 'UTF-8'); ?>" border="0" /></a><?php endif; ?>'+
+															'<?php if ($permission_arr['view_enable']) : ?>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0);" class="invoice_view_btn"><img src="application/modules/Administrator/layouts/scripts/images/tools/preview.gif" border="0" title="<?php echo html_entity_decode($this->translator->translator('common_preview_title'), ENT_QUOTES, 'UTF-8'); ?>" /></a><?php endif; ?>', 
+												filterable: false, 
+												sortable: false,
+												columnMenu: false 
+											}
+										],
+						columnMenu:	{
+							columns: true,
+							messages: {
+									sortAscending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_ascending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									sortDescending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_descending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									filter: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_filter", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									columns: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_columns", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+								}
+						},
+						messages: {
+										display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+										empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+										page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+										of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+										itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+										first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+										previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+										next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+										last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+										refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+										
+										common_msg_dialog_id 		:	'dialog_msg',
+										common_confirn_dialog_id	:	'dialog-confirm',
+										common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_title			:	"<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_confirm		:	"<?php echo $this->translator->translator("invoice_list_delete_confirm"); ?>",
+										common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+										common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+										common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+										common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+										common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>",
+										common_perm_err				:	"<?php echo $this->translator->translator("common_perm_err"); ?>",
+										common_selected_err	 		:	"<?php echo $this->translator->translator("invoice_selected_err"); ?>"
+									}
+					};
+
+$(document).ready(function() {
+		
+	commonGrid(settingObj);
+			
+});
+function viewInvoice()
+{
+	$('a.invoice_view_btn').unbind('click');
+	$('a.invoice_view_btn').click(function(){
+		var self	= 	this;
+		var invoice_id	= 	$(self).parents('tr:first').find('td>input[type="checkbox"]').val();
+		if(invoice_id != null && invoice_id != '')
+		{
+			// handle event			
+			window_box = (!window_box) ? kendoWindowBox(settingObj) : window_box;
+			window_box.data("kendoWindow").setOptions( { width : 800 });											
+			window_box.data("kendoWindow").title("<?php echo html_entity_decode($this->translator->translator('invoice_list_invoice_preview'), ENT_QUOTES, 'UTF-8'); ?>").refresh({
+							url: "<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action'     => 'view' , 'invoice_id' => '' ), 'adminrout',    true) ?>"+invoice_id,
+							type: 'POST',
+							data: { invoice_id: invoice_id},
+							template: "#= data #"
+						}).center().open();	
+		}
+	});
+}
+</script>
+
+<script type="text/x-kendo-template" id="toolbar_template">	
+	<div class="toolbar">
+		<div class="button-container">
+			
+			<?php if ($permission_arr['paid_enable']) : ?>
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" rel="paid" class="status_btn"><span class="icon publish"><?php echo html_entity_decode($this->translator->translator('common_paid_selected'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" rel="unpaid" class="status_btn"><span class="icon unpublish"><?php echo html_entity_decode($this->translator->translator('common_unpaid_selected'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			<?php endif; ?>
+		
+			<?php if ($permission_arr['delete_enable']) : ?>
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="delete_all"><span class="icon delete"><?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			<?php endif; ?>
+			
+			<?php if ($permission_arr['paid_enable']) : ?>
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" rel="cancel" class="status_btn"><span class="icon close"><?php echo html_entity_decode($this->translator->translator('common_cancel_selected'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			<?php endif; ?>
+		</div>
+	</div>
+</script>
+<style>
+/* INVOICE START ******************************************************************** */
+
+.first-payment .paid{
+	font-weight:bold;
+	color:#090;
+}
+
+.first-payment .due{
+	font-weight:bold;
+	color:#F00;
+}
+
+.invoice-satus{
+	display:block;
+}
+
+.invoice-satus.paid{
+	border:1px solid #93DD88;
+	background-color:#D5FFCE;
+	color:#009900;
+}
+
+.invoice-satus.unpaid{
+	border:1px solid #FF8A8A;
+	background-color:#FFCECE;
+	color:#FA1919;
+}
+
+.invoice-satus.cancel{
+	border:1px solid #FFCC33;
+	background-color:#FFFFB0;
+	color:#FF6600;
+}
+
+.client-info{
+	width:49%;
+	float:left;	
+}
+
+.invoice-info{
+	width:49%;
+	float:right;
+}
+
+.client-info .amount-payable,
+.invoice-info .amount-payable{
+	font-weight:bold;
+	color:#F60;
+}
+
+.payment-info{
+	width:47%;
+	float:right;
+	padding:20px 10px;
+	margin-top:21px;
+	background-color:#E3F1FD;
+    border: 1px solid #A4DBFF;
+	border-radius:5px;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	text-align:center;
+}
+
+.payment-info #invoice_status{
+	display:inline-block;
+	margin: 30px 0 30px 0;
+}
+
+.payment-info .btn-spacer{
+	margin: 20px 0;
+	display:inline-block;
+}
+
+.client-info .payable-later,
+.invoice-info .payable-later{
+	font-weight:bold;
+	font-style:italic;
+	color:#090;
+}
+
+.invoice-info .invoice-satus{
+	display:inline-block;
+	padding:2px 10px;
+}
+
+.client-info .grand-total,
+.invoice-info .grand-total{
+	font-weight:bold;
+}
+
+.invoice-container{
+	border:1px solid #D6D6D6;
+}
+
+.invoice .invoice-chart{
+	width:100%;
+	display:table;
+	margin:auto;
+	border-spacing:0;
+}
+
+.invoice .invoice-chart .div-head,
+.invoice .invoice-chart .div-hr{
+	display:table-row;
+	background:#F4F4F4;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F4F4F4', endColorstr='#E5E5E5');
+	background: -moz-linear-gradient(top, #F4F4F4, #E5E5E5);
+	background: -webkit-gradient(linear, left top, left bottom, from(#F4F4F4), to(#E5E5E5));
+	box-shadow: 0 1px 1px #FFFFFF inset;
+}
+
+.invoice .invoice-chart .div-head{
+	text-align:center;
+	font-weight:bold;
+	font-size:13px;
+	color:#272727;
+	text-shadow:1px 1px 1px #FFF;
+	border-bottom:1px solid #D6D6D6;
+}
+
+.invoice .invoice-chart .div-hr{
+	background:none;
+}
+
+.invoice .invoice-chart .div-head .div-vr-1,
+.invoice .invoice-chart .div-head .div-vr-2,
+.invoice .invoice-chart .div-hr .div-vr-1,
+.invoice .invoice-chart .div-hr .div-vr-2{
+	display:table-cell;
+	padding:10px;
+}
+
+
+.invoice .invoice-chart .div-head .div-vr-1,
+.invoice .invoice-chart .div-head .div-vr-2{
+	border-bottom:1px solid #D6D6D6;
+	padding:15px 0;
+}
+
+.invoice .invoice-chart .div-head .div-vr-1,
+.invoice .invoice-chart .div-hr .div-vr-1{
+	width:65%;
+}
+.invoice .invoice-chart .div-head .div-vr-2,
+.invoice .invoice-chart .div-hr .div-vr-2{
+	width:35%;
+}
+
+.invoice .invoice-chart .div-hr .div-vr-1,
+.invoice .invoice-chart .div-hr .div-vr-2{
+	border-bottom:1px solid #D6D6D6;
+}
+
+.invoice .invoice-chart .div-hr .div-vr-2{
+	text-align:right;
+}
+
+.invoice .invoice-chart .div-hr.amount-hr{
+	text-align:right;
+	background-color:#EFEFEF;
+	font-size:13px;
+}
+
+.invoice .invoice-chart .div-hr.amount-hr .div-vr-1,
+.invoice .invoice-chart .div-hr.amount-hr .div-vr-2{
+	border-top:1px solid #D6D6D6;
+	border-bottom:none
+}
+
+.invoice .item-title{
+	font-size:17px;
+	margin:10px auto 2px auto;
+	padding:10px 0px 10px 5px;
+	background-color:#FFC;
+	border-top:1px solid #FC0;
+	border-bottom:1px solid #FC0;
+}
+
+.invoice .product-title{
+	color:#F60;
+	font-weight:bold;
+	font-style:italic;
+	text-decoration:underline;
+}
+
+.invoice .amount-label{
+	font-weight:bold;
+}
+
+h1.status-paid,
+h1.status-unpaid,
+h1.status-cancelled{
+	font-weight:bold;
+	font-size:55px;
+	text-align:left;
+	text-transform:uppercase;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	padding:5px 20px;
+	float:left;
+}
+
+h1.status-paid .invoice-satus.paid,
+h1.status-unpaid .invoice-satus.unpaid,
+h1.status-cancelled .invoice-satus.cancel{
+	border:0;
+}
+
+h1.status-paid{
+	border:1px solid #87D97B;
+	background-color:#D5FFCE;
+}
+
+h1.status-unpaid{
+	border:1px solid #DF8F8F;
+	background-color:#FFCECE;
+}
+
+h1.status-cancelled{
+	border:1px solid #E4D949;
+	background-color:#FFFBCC;
+}
+
+
+
+/* INVOICE END ********************************************************************** */
+</style>
+<!-- Content Start-->
+<article class="member-dashboard">	
+  	<h1><?php echo $headTitle; ?></h1>
+    <br />
+    <div class="member-block block-control-panel">
+        <div class="block-heading">
+            <div class="symbol"><?php echo $this->translator->translator('invoice_list_page_name'); ?></div>
+        </div>        
+        <div class="block-body">       		 
+             
+                        	  
+        	 <div id="example">
+             	<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>>
+   					 <div id="grid"></div>  
+                 </div> 
+             </div> 
+             
+             
+                          
+        </div>
+    </div>    
+</article>
+<div id="dialog_window" <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>></div>
+<div id="dialog_msg" title="<?php echo $this->translator->translator('common_dialog_msg',$this->translator->translator('invoice_list_page_name')); ?>"></div>
+<div id="dialog-confirm" title="<?php echo $this->translator->translator('common_confirmation',$this->translator->translator('common_delete')); ?>"></div>
+<!-- Content End -->
+<?php endif; ?>
+

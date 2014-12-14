@@ -1,0 +1,77 @@
+<?php 
+$front_template = Zend_Registry::get('front_template'); 
+$this->translator = Zend_Registry::get('translator');
+$global_conf = Zend_Registry::get('global_conf');
+$auth = Zend_Auth::getInstance ();
+$acount_link =  'Members-Dashboard';
+$booking_link = 'Members-Invoice-Item-List';
+
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/js/slide.js');
+$sign_in_out = ($auth->hasIdentity()) ? $this->translator->translator('common_front_header_signout','', '', $front_template['theme_folder']) : $this->translator->translator('common_front_header_signin','', '', $front_template['theme_folder']);
+?>
+
+<header id="header">
+	<!-- Top Panel Start -->
+    <div id="toppanel">
+        <div id="panel">
+            <div class="content clearfix">
+                <div class="left">
+                    <?php echo $this->partial('blocks/article_home_byId.phtml'); ?>
+                </div>
+                <div class="right">
+                    <?php echo $this->partial('blocks/members_login.phtml'); ?>
+                    <div class="login-info">
+						<h3><?php echo $this->translator->translator('block_memberlogin_info_title','', '', $front_template['theme_folder']); ?></h3>
+                    	<ul>
+                        	<li><?php echo $this->translator->translator('block_memberlogin_info1','', '', $front_template['theme_folder']); ?></li>
+                            <li><?php echo $this->translator->translator('block_memberlogin_info2','', '', $front_template['theme_folder']); ?></li>
+                            <li><?php echo $this->translator->translator('block_memberlogin_info3','', '', $front_template['theme_folder']); ?></li>
+                            <li><?php echo $this->translator->translator('block_memberlogin_info4','', '', $front_template['theme_folder']); ?></li>
+                    	</ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="tab">
+            <ul class="login user-link">
+                <li class="left">&nbsp;</li>
+                <li class="welcome"><?php echo $this->translator->translator('common_front_header_welcome', '', '', $front_template['theme_folder']).' '.$global_conf['site_name']; ?></li>
+                <li id="toggle">
+                    <a id="open" class="open" href="javascript:void(0)"><?php echo $sign_in_out; ?></a>
+                    <a id="close" style="display: none;" class="close" href="javascript:void(0)"><?php echo $this->translator->translator('common_front_header_close_panel','', '', $front_template['theme_folder']); ?></a>			
+                </li>
+                <?php if(!$auth->hasIdentity()) : ?>
+                <li>| &nbsp;<a href="Registration/104"><?php echo $this->translator->translator('common_front_header_register','', '', $front_template['theme_folder']); ?></a></li>
+                <?php endif; ?>
+                <li class="right">&nbsp;</li>
+            </ul> 
+        </div>
+	</div>
+    <!-- Top Panel End -->
+   
+    <div class="container">
+        <div class="logo">
+            <a href="#"><img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/logo.png" alt="Best online hotel reservation script" height="95" border="0" title="Online Hotel Booking Script"></a>
+            <!--<h1><?php //echo $this->translator->translator('header_logo','', '', $front_template['theme_folder']); ?></h1>-->
+        </div>
+            
+        <div class="quick-access">
+            <div class="support ad-header">
+               <?php $this->ad(179); ?> <?php //echo $this->partial('blocks/ad_header.phtml'); ?>
+            </div>
+            
+            <div class="top-links">
+                <ul>
+                    <li class="first"><a href="<?php echo $acount_link ?>"><?php echo $this->translator->translator('common_front_account','', '', $front_template['theme_folder']); ?></a></li>
+                    <li><a href="<?php echo $booking_link ?>"><?php echo $this->translator->translator('common_front_booking','', '', $front_template['theme_folder']); ?></a></li>                                           
+                    <li><a href="Register"><?php echo $this->translator->translator('hotel_front_header_menu_registration','', '', $front_template['theme_folder']); ?></a></li>                        
+                    <li><a href="Site-Map"><?php echo $this->translator->translator('common_front_header_menu_sitemap','', '', $front_template['theme_folder']); ?></a></li>
+                </ul>
+                <div class="flags">
+					<?php echo $this->partial('blocks/header_language.phtml'); ?>
+                </div>
+            </div>
+        </div>     
+    </div>
+</header>

@@ -1,0 +1,168 @@
+<?php
+class featured_hotels_special
+{
+	protected	$_group = 1;
+	protected	$_limit = 6;
+	protected	$_DBconn;
+	protected	$_front_template;
+	protected	$_global_conf;
+	protected	$_view;
+	protected	$area_db;
+	protected 	$group_datas;
+	
+	public function __construct($view) 
+	{
+		$this->_front_template = Zend_Registry::get('front_template'); 
+		$this->_global_conf 		= Zend_Registry::get('global_conf');
+		$this->_view =	$view;
+		//DB Connection
+		$this->_DBconn = Zend_Registry::get('msqli_connection');
+		$this->_DBconn->getConnection();
+		
+		$this->area_db = new Hotels_Model_DbTable_Area();	
+		$group_db =  new Hotels_Model_DbTable_HotelsGroup();
+		$this->group_datas = $group_db->getGroupName($this->_group);	
+	}
+	
+	public function truncate($phrase,$start_words, $max_words)
+	{
+	   $phrase_array = explode(' ',$phrase);
+	   if(count($phrase_array) > $max_words && $max_words > 0)
+		  $phrase = implode(' ',array_slice($phrase_array, $start_words, $max_words)).'...';  
+	   return $phrase;
+	}
+	
+	public function class_body()
+	{
+		$translator = Zend_Registry::get('translator');		
+		$maximum_stars_digit = $translator->translator('maximum_stars_digit', '', 'Hotels');	
+		$currency = new Zend_Currency($this->_global_conf['default_locale']);
+		$currency_symbol = $currency->getSymbol();	
+		$review_helper = new Review_View_Helper_Review();
+		
+		$selectGP = $this->_DBconn->select()
+						->from(array('hp' => Zend_Registry::get('dbPrefix').'hotels_page'), array('*'))
+					   	->where('hp.group_id = ?',$this->_group)
+						->where('hp.featured  = ?','1')
+					   	->where('hp.active  = ?','1')
+						->joinLeft(array('bt' => Zend_Registry::get('dbPrefix').'hotels_business_type'), 'hp.hotels_type = bt.id', array('business_type' => 'bt.business_type'))
+					   	->joinLeft(array('gp' => Zend_Registry::get('dbPrefix').'hotels_group'), 'gp.id = '. $this->_group, array('review_id' => 'gp.review_id'))
+					   	->limit($this->_limit);
+		
+		$hotels_info =  $selectGP->query()->fetchAll();		
+		$roomType_db = new Hotels_Model_DbTable_RoomType();		
+?>
+
+<div class="block block-grid">
+	<div class="block-body">
+		<!--<h2><?php //echo $translator->translator('hotels_block_featured_list_title','', '', $this->_front_template['theme_folder']); ?></h2>-->
+		<div id="featured_list">
+			<?php						  
+                if($hotels_info)
+                {
+                    $j = 1;								
+                    foreach($hotels_info as $entry)
+                    {
+                        $hotels_image_val_arr = explode(',',$entry['hotels_image']);
+                        $hotels_image_no = count($hotels_image_val_arr);
+                        if($this->_view->escape($entry['hotels_primary_image']))
+                        { 
+                            $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->_view->escape($entry['hotels_primary_image']); 
+                        }
+                        else
+                        { 
+                            if($this->_view->escape($entry['hotels_image']))
+                            {										
+                                $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->_view->escape($hotels_image_val_arr[0]); 
+                            }
+                            else
+                            {
+                                $thumb_image = 'application/layouts/scripts/'.$this->_front_template['theme_folder'].'/images/mod_hotel_img/no_image.png'; 
+                            }		
+                        }
+                        if($this->group_datas['file_thumb_width'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToHeight')
+                        { 
+                            $width = 'width="'.$this->_view->escape($this->group_datas['file_thumb_width']).'"'; 
+                        }
+                        else
+                        {
+                            $width = '';
+                        } 
+                        if($this->group_datas['file_thumb_height'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToWidth')
+                        { 
+                            $height = 'height="'.$this->_view->escape($this->group_datas['file_thumb_height']).'"'; 
+                        } 
+                        else
+                        {
+                            $height = '';
+                        }						
+                        $lication_info = ($entry['area_id'])? $this->area_db->getAreaInfo($entry['area_id']) : '';			
+            ?>
+				<div class="col">
+					<span class="block-title">
+						<a href="<?php echo $this->_view->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->_view->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>" class="preview" link="" title="<?php echo $this->_view->escape($entry['hotels_name']); ?>"><?php echo $this->truncate($this->_view->escape($entry['hotels_name']), 0, 3); ?></a>
+					</span>
+                    
+                    <div class="clear">					
+					<?php
+                        for($i = 1; $i < $maximum_stars_digit; $i++)
+                        {
+                            $hotel_stars = ($i <= $this->_view->escape($entry['hotels_grade'])) ? "<img src='application/layouts/scripts/".$this->_front_template['theme_folder']."/images/mod_hotel_img/star-small-active.png' border='0' />" : "<img src='application/layouts/scripts/".$this->_front_template['theme_folder']."/images/mod_hotel_img/star-small-inactive.png' border='0' />";
+                            echo $hotel_stars.'&nbsp;';
+                        }
+						if(!empty($entry['room_type_id']))
+						{
+							$room_type_id_arr = explode(',', $entry['room_type_id']);
+							$roomType_info = $roomType_db->getRoomTypeInfo($room_type_id_arr[0]);
+						}
+						else
+						{
+							$roomType_info = null;
+						}
+                    ?>
+                    </div>
+                    	
+					<div class="img-wrapper">
+                        <a href="<?php echo $this->_view->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->_view->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>" class="preview" width="300" link="<?php echo $thumb_image; ?>"  title="<?php echo $this->_view->escape($entry['hotels_name']); ?>"><img src="<?php echo $thumb_image; ?>" border="0" class="thumb" <?php echo $width." ".$height; ?>></a>
+                        <div class="photo-count-container">
+                            <div class="photo-count">
+                                <a href="<?php echo $this->_view->url(array('module' => 'hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->_view->escape($entry['hotels_title']),'tab' => 1 ),'Hotels-details/:hotels_title/:tab',true); ?>" title="<?php echo $translator->translator('hotels_front_page_hotels_click_view_listing','', 'Hotels'); ?>"><?php echo $translator->translator('hotels_front_page_hotels_photo_no' , '<span>'.$hotels_image_no.'</span>' ,'Hotels'); ?></a>
+                            </div>
+                        </div>   
+					</div>                                  
+								  
+					<div class="details">
+                    	<span class="price-previous"><?php echo $currency_symbol.$this->_view->escape($roomType_info['basic_price']); ?></span> &nbsp; 
+                		<span class="price price-big"><?php echo $currency_symbol.$this->_view->price($this->_view->escape($roomType_info['descount_price'])); ?></span><br />
+						<?php echo $translator->translator('hotels_block_featured_label_location', '', 'Hotels'); ?> <a href="<?php echo $this->_view->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->_view->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>"><?php echo $this->_view->escape($lication_info['city']); ?></a><br />
+						<span class="info"><?php if(!empty($entry['feature_distance_from_airport'])){ echo $this->_view->escape($entry['feature_distance_from_airport']).' '.$translator->translator('hotels_front_page_distance','', 'Hotels'); }  ?></span><br />
+						<?php echo $translator->translator('hotels_block_featured_label_description', '', 'Hotels'); ?> <?php echo $this->truncate(strip_tags($this->_view->escape($entry['hotels_desc'])), 0, 6); ?><br />
+						<?php 
+                            if(!empty($entry['review_id'])){ 
+                            $review_no = $review_helper->getNumOfReviews($entry['id'], $this->_view->escape($entry['review_id']));
+                        ?>
+						<?php echo $translator->translator('block_score','', '', $this->_front_template['theme_folder']); ?>&nbsp;<span class="review-count"><a href="<?php echo $this->_view->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->_view->escape($entry['hotels_title']),'tab' => 10 ),'Hotels-details/:hotels_title/:tab',true); ?>"><?php echo $translator->translator('common_review_no',htmlentities($review_no), 'Hotels'); ?></a></span> <?php } ?><br />
+                        <span class="status"><?php  echo $this->_view->escape($entry['hotels_status']); ?></span>&nbsp;<span class="type"><?php  echo $this->_view->escape($entry['business_type']); ?></span>
+                    </div>
+            	</div>
+			<?php
+                }
+            }
+            ?>	
+		</div>
+	</div>
+</div>
+
+<?php
+	}
+}
+try
+{
+	$featured_hotels_special_class = new featured_hotels_special($this);
+	$featured_hotels_special_class->class_body();
+}
+catch(Exception $e)
+{
+	echo $e->getMessage();
+}
+?>

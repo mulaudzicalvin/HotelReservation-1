@@ -1,0 +1,82 @@
+<?php
+$front_template = Zend_Registry::get('front_template');
+$locale = Eicra_Global_Variable::getSession()->sess_lang;
+$locale_arr = explode('_', $locale);
+$locale_direction = Eicra_Global_Variable::getSession()->site_direction;
+$style_direction = ($locale_direction == 'rtl') ? '_'.$locale_direction : '';
+
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/jquery/jquery-1-9-1/jquery.js', '');
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/jui/jui-1-10-2/blue/jquery-ui.custom.js', '');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/jui/jui-1-10-2/blue/jquery-ui.custom.css');
+
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/js/jquery.idTabs.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/js/slicker.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/js/common.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/js/jquery.hoverpulse.js', '');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/template.css');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/general.css');
+
+/*********************************************************Kendo Start*********************************************/
+$kendo_theme = 'Uniform';
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/kendo.web.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/cultures/kendo.culture.'.$locale_arr[0].'.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/cultures/kendo.culture.'.implode('-', $locale_arr).'.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/application/modules/Portfolio/js/uploader.js', '');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/kendo/src/styles/kendo.common.css');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/kendo/src/styles/kendo.'.strtolower($kendo_theme).'.css');
+/*********************************************************Kendo End*********************************************/
+
+if($locale_direction == 'rtl')
+{
+	/*********************************************************Kendo Right Start*********************************************/
+	echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/kendo/styles/kendo.rtl.min.css');
+	/*********************************************************Kendo Right End*********************************************/
+    echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/template'.$style_direction.'.css');
+    echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/general'.$style_direction.'.css'); 
+}	
+	echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/pagination.css');
+?>
+
+<!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->
+
+<script>
+
+$(document).ready(function(){
+
+$("a.jQueryBookmark").click(function(e){
+
+	e.preventDefault(); // this will prevent the anchor tag from going the user off to the link
+
+	var bookmarkUrl = this.href;
+
+	var bookmarkTitle = this.title;
+
+	if (window.sidebar) { // For Mozilla Firefox Bookmark
+
+		window.sidebar.addPanel(bookmarkTitle, bookmarkUrl,"");
+
+	} else if( window.external || document.all) { // For IE Favorite
+
+		window.external.AddFavorite( bookmarkUrl, bookmarkTitle);
+
+	} else if(window.opera) { // For Opera Browsers
+
+		$("a.jQueryBookmark").attr("href",bookmarkUrl);
+
+		$("a.jQueryBookmark").attr("title",bookmarkTitle);
+
+		$("a.jQueryBookmark").attr("rel","sidebar");
+
+	} else { // for other browsers which does not support
+
+		 alert('Your browser does not support this bookmark action');
+
+		 return false;
+
+	}
+
+});		
+});
+</script>

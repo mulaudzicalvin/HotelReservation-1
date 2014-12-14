@@ -1,0 +1,21 @@
+<?php
+try
+{	
+	$translator = Zend_Registry::get('translator');
+	$front_template = Zend_Registry::get('front_template'); 
+	$review_db = new Review_Model_DbTable_Setting();
+	$review_no = $review_db->getReviewNo(2);
+}
+catch(Exception $e)
+{
+	$review_no = 0;
+}
+?>
+
+<div class="block block-reviews">
+	<div class="block-body">
+    	<h2><?php echo $translator->translator('block_reviews_title','','', $front_template['theme_folder']); ?></h2>
+        
+        <h1><?php echo $translator->translator('block_reviews_total','','', $front_template['theme_folder']); ?> <?php echo $this->numbers(number_format($review_no)); ?> <?php echo $translator->translator('block_reviews_info','','', $front_template['theme_folder']); ?></h1>
+    </div>
+</div>

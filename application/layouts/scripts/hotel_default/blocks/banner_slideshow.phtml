@@ -1,0 +1,44 @@
+<?php
+class banner_slideshow
+{
+	protected	$_translator;
+	protected	$_view;
+	
+	public function __construct($view) 
+	{
+		$this->_front_template = Zend_Registry::get('front_template'); 
+		$this->_view =	$view;	
+		$this->_translator = Zend_Registry::get('translator');			
+	}
+	
+	public function class_body()
+	{
+		echo $this->_view->headScript()->setFile('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/vendor/scripts/js/jquery.nivo.slider.pack.js');
+		echo $this->_view->headLink()->setStylesheet('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/css/themes/light/light.css');
+		echo $this->_view->headLink()->setStylesheet('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/css/nivo-banner.css');
+?>
+
+<script type="text/javascript">
+$(window).load(function() {
+	$('#slider').nivoSlider();
+});
+</script>
+<div class="slider-wrapper theme-light">
+	<div id="slider" class="nivoSlider">
+		<img src="application/layouts/scripts/<?php echo $this->_front_template['theme_folder']; ?>/images/banner.jpg">
+	</div>
+</div>       
+
+<?php
+	}
+}
+try
+{
+	$banner_slideshow_class = new banner_slideshow($this);
+	$banner_slideshow_class->class_body();
+}
+catch(Exception $e)
+{
+	echo $e->getMessage();
+}
+?>

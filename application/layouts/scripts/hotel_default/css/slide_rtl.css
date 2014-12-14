@@ -1,0 +1,39 @@
+
+.tab ul.login {
+  	float:left;
+  	clear:left;
+	right:auto;
+	left: 150px;
+}
+
+.tab ul.login li {
+ 	text-align:right;
+}
+
+.tab a.open, .tab a.close {
+	padding-left:0;
+	padding-right: 22px !important;
+}
+
+.tab a.open {background-position: right center;}
+.tab a.close {background-position: right center;}
+
+#panel .content{
+	text-align:right;
+}
+
+#panel .content .left {
+	float:right;
+	margin:0 0 0 15px;
+	border-right: 0;
+	border-left: 1px solid #008DEC;
+}
+
+#panel .content .right{
+	float:left;
+}
+
+#panel .login-info ul li{
+	background-position:94% 5px;
+	padding:2px 40px 2px 0;
+}

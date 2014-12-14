@@ -1,0 +1,70 @@
+<?php
+$version = Zend_Registry::get('version'); 
+$global_conf = Zend_Registry::get('global_conf'); 
+$locale = (Eicra_Global_Variable::getSession()->sess_lang) ? Eicra_Global_Variable::getSession()->sess_lang : 'en_US';
+$locale_arr = explode('_', $locale);
+$locale_direction = Eicra_Global_Variable::getSession()->site_direction;
+$style_direction = ($locale_direction == 'rtl') ? '_'.$locale_direction : '';
+
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/jquery/jquery-'.str_replace('.', '-', $version->getJQueryVersion()).'/jquery.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/jui/jui-'.str_replace('.', '-', $version->getJQueryUIVersion()).'/'.Zend_Registry::get('jtheme').'/jquery-ui.custom.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/application/modules/Administrator/layouts/scripts/vendor/scripts/js/common.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/application/modules/Administrator/layouts/scripts/vendor/scripts/js/slicker.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/js/jquery.hoverpulse.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/application/modules/Administrator/layouts/scripts/vendor/scripts/js/ddslick.js');
+
+echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/jui/jui-'.str_replace('.', '-', $version->getJQueryUIVersion()).'/'.Zend_Registry::get('jtheme').'/jquery-ui.custom.css');
+
+echo $this->headLink()->setStylesheet($this->baseUrl().'/application/modules/Administrator/layouts/scripts/css/stylesheet.css');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/application/modules/Administrator/layouts/scripts/css/pagination.css'); 
+echo $this->headLink()->setStylesheet($this->baseUrl().'/application/modules/Administrator/layouts/scripts/css/floatingbar.css'); 
+
+/*********************************************************Kendo Start*********************************************/
+$kendo_theme = 'Uniform';
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/kendo.web.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/cultures/kendo.culture.'.$locale_arr[0].'.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/cultures/kendo.culture.'.implode('-', $locale_arr).'.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/kendo/js/cultures/kendo.culture.'.str_ireplace('_', '-', $global_conf['default_locale']).'.min.js', '');
+echo $this->headScript()->setFile($this->baseUrl().'/application/modules/Portfolio/js/uploader.js', '');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/kendo/src/styles/kendo.common.css');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/kendo/src/styles/kendo.'.strtolower($kendo_theme).'.css');
+/*********************************************************Kendo End*********************************************/
+
+if($locale_direction == 'rtl')
+{
+	/*********************************************************Kendo Right Start*********************************************/
+	echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/kendo/styles/kendo.rtl.min.css');
+	/*********************************************************Kendo Right End*********************************************/
+	echo $this->headLink()->setStylesheet($this->baseUrl().'/application/modules/Administrator/layouts/scripts/css/stylesheet'.$style_direction.'.css');	
+}
+?>
+<!--[if lt IE 7]>
+    <style type="text/css">
+        #wrapper { height:100%; }
+    </style>
+<![endif]-->
+
+<script>		
+  function qToolTipFunctions()
+  {
+	  $( document ).tooltip({
+	  	  items: "input[title],textarea[title],div[title],td[title],span[title],img[title],a[title],li[title]",
+		  //show: { effect: "slide" },
+		  tooltipClass: "jui-tooltip", 
+		  content: function() {
+				var element = $( this );				
+				if ( element.is( "[title]" )  && !element.hasClass('noTitle')) 
+				{
+					return element.attr( "title" );
+				}			
+			},
+		  track: true
+	  });				
+  }
+  $(document).ready(function(){
+	  qToolTipFunctions();
+  });		
+</script>
+<!--[if lt IE 9]>
+	<script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+<![endif]-->   

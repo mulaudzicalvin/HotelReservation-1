@@ -1,0 +1,424 @@
+<?php
+$version = Zend_Registry::get('version'); 
+$front_template = Zend_Registry::get('front_template');
+if(!empty($this->group_datas['meta_keywords'])) { $this->headMeta()->setName('keywords',$this->group_datas['meta_keywords']);}
+if(!empty($this->group_datas['meta_desc'])) { $this->headMeta()->setName('description',$this->group_datas['meta_desc']); }
+if(!empty($this->group_datas['group_name'])) { $this->headTitle()->headTitle($this->group_datas['group_name'],'SET')->setSeparator(' - ')->headTitle($this->group_datas['meta_title']); }
+
+$maximum_stars_digit = $this->translator->translator('maximum_stars_digit');
+function hotels_truncate($phrase,$start_words, $max_words)
+{
+   $phrase_array = explode(' ',$phrase);
+   if(count($phrase_array) > $max_words && $max_words > 0)
+	  $phrase = implode(' ',array_slice($phrase_array, $start_words, $max_words)).'...';  
+   return $phrase;
+}
+
+$auth = Zend_Auth::getInstance ();
+Eicra_Global_Variable::getSession()->returnLink = ($auth->hasIdentity ()) ? '' : $this->url(array('module'=> 'Hotels','controller'=>'Backendpro', 'action'=>'add','group_id' => $this->group_datas['id']),'adminrout',true);
+$url = ($auth->hasIdentity ()) ? $this->url(array('module'=> 'Hotels','controller'=>'Backendpro', 'action'=>'add','group_id' => $this->group_datas['id']),'adminrout',true)  : $this->serverUrl().$this->baseUrl().'/Frontend-Login';
+
+$group_db = new Hotels_Model_DbTable_HotelsGroup();
+$hotels_helper = new Hotels_View_Helper_HotelsGroup();
+$num_hotels = $hotels_helper->getNumOfProduct($this->group_datas['id']);
+$num_country = $hotels_helper->getNumOfProductCountry($this->group_datas['id']);
+?>
+<script type="text/javascript">
+$(document).ready(function() {
+		calender('check_in_search', 'check_out_search');
+		calender('check_out_search', 'check_in_search');
+		autoSugg();
+});
+function calender(id,second_id)
+{
+	$("#"+id).datepicker({
+		showOn: 'button',
+		buttonImage: 'application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/calendar.png',
+		buttonImageOnly: true,		
+		monthNamesShort:<?php echo $this->translator->translator("common_calender_monthNamesShort"); ?>,
+		monthNames:<?php echo $this->translator->translator("common_calender_monthNames"); ?>,
+		dayNamesMin:<?php echo $this->translator->translator("common_calender_dayNamesMin"); ?>,
+		showAnim: 'slide',
+		buttonText: 'Calender',
+		dateFormat:'yy-mm-dd',
+		autoSize:false,
+		showButtonPanel:false,
+		changeMonth: true,
+		changeYear: true,
+		onSelect: function(dateText, inst) {
+			var id_type_arr = id.split('_');
+			var true_id = 		id_type_arr[0] + id_type_arr[1];			
+			var currentTime = new Date();
+			var currentDay = (currentTime.getDate() < 10) ? '0' + currentTime.getDate() : currentTime.getDate();
+			var currentMonth = ((currentTime.getMonth() + 1) < 10) ? '0' + (currentTime.getMonth() + 1) : (currentTime.getMonth() + 1);
+			var today = currentTime.getFullYear() + '-' + currentMonth + '-' + currentDay;				
+			if(true_id == 'checkin')
+			{				
+				if( (dateText != '') && ( (toTimestamp(dateText) >= toTimestamp($('#'+second_id).val())) || (toTimestamp(dateText) < toTimestamp(today)) )  )
+				{					
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_checkin_date_err'); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+				if(!is_30dayDiff(dateText, $('#'+second_id).val()))
+				{
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_date_difference_err'); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+			}
+			else if(true_id == 'checkout')
+			{
+				if( (dateText != '') && ( (toTimestamp(dateText) <= toTimestamp($('#'+second_id).val())) || (toTimestamp(dateText) < toTimestamp(today)) )  )
+				{
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_checkout_date_err'); ?>";
+					openMsgDialog(msg);
+					$('#'+id).val('');
+				}
+				if(!is_30dayDiff($('#'+second_id).val(), dateText))
+				{
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_date_difference_err'); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+			}
+		}
+	});
+	$("img[class='ui-datepicker-trigger']").each(function(){ 
+			$(this).attr('style', '');
+		 });
+}
+
+function is_30dayDiff(checkin, checkout)
+{
+	if(checkin != '' && checkout != '')
+	{
+		var checkin_arr = checkin.split('-');
+		var checkout_arr = checkout.split('-');
+		var checkin_obj =new Date(checkin_arr[0], (checkin_arr[1] - 1), checkin_arr[2]);
+		var checkout_obj =new Date(checkout_arr[0], (checkout_arr[1] - 1), checkout_arr[2]);		
+		var one_day=1000*60*60*24;
+		var diff = Math.ceil((checkout_obj.getTime()-checkin_obj.getTime())/(one_day));	
+		if(diff > 30)
+		{
+			return false;
+		}	
+	}
+	return true;	
+}
+
+function toTimestamp(strDate){
+	 var datum = Date.parse(strDate);
+	 return datum/1000;
+}
+
+function openMsgDialog(msg)
+{
+$('#dialog_container').html(msg).dialog({
+			autoOpen: true,
+			modal: false,
+			show: 'explode',
+			resizable: true,				
+			buttons: [{ text: "<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>", click: function() { $(this).dialog('option', 'hide', 'explode').dialog("close"); } } ],
+			open: function(event, ui)
+				 {
+					setTimeout(function() 
+					{									
+						if($('#' + event.target.id).dialog('isOpen'))
+						{
+							$('#' + event.target.id).dialog('option', 'hide', 'explode').dialog('close');										
+						}
+					}, 10000);
+				  }
+		});
+}
+
+function autoSugg()
+{
+	autoSuggestion('location_for_search', "<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'frontend', 'action'     => 'searchname' ), 'adminrout',    true) ?>", {'location_for_search': ''}, ['hotels_primary_image', 'hotels_image', 'hotels_name', 'location_for_search', 'owner_name', 'hotels_location'], 'data/frontImages/hotels/hotels_image', 2);
+}
+</script>
+
+<div id="dialog_container" title="<?php echo $this->translator->translator('common_dialog_msg',$this->translator->translator('hotels_front_page_dialog_name')); ?>"></div>
+
+<div>
+	<div class="listing">
+		<ul>
+    	   	<li class="first"><a href="How-it-Works"><?php echo $this->translator->translator('hotels_front_page_home_how_it_work_link'); ?></a></li>
+           	<li><a href="Registration/104"><?php echo $this->translator->translator('hotels_front_page_home_sign_up_link'); ?></a></li> 
+			<li><a href="Frontend-Login"><?php echo $this->translator->translator('hotels_front_page_home_log_in_link'); ?></a></li>
+            <li><a href="Contact-Us"><?php echo $this->translator->translator('hotels_front_page_home_help_link'); ?></a></li>
+        </ul>        
+		<span class="btn"><a href="<?php echo $url; ?>" class="hotel-add-btn"><span class="icon"></span><?php echo $this->translator->translator('hotels_front_page_home_add_btn_link'); ?></a></span>
+	</div>
+    <!-- Banner Start -->
+    <div id="banner">
+		<div class="slideshow-container">
+        	<?php echo $this->partial('blocks/hotel_count.phtml'); ?>
+			<?php echo $this->partial('blocks/ad_hotels_banner.phtml'); ?>
+        </div>
+        
+        <div class="block-search">
+        	<div class="block-content">
+				<h1><?php echo $this->translator->translator('hotels_block_simple_search_title','','Hotels'); ?></h1>
+                <form id="form1" name="form1" method="post" action="<?php echo $this->url( array('module' => 'Hotels', 'controller' => 'search', 'action'     => 'items' ), 'Search-Hotels',    true); ?>">
+                	<div class="col">
+                    	<p><?php echo $this->translator->translator('hotels_list_page_search_group','','Hotels'); ?></p>
+                  		<select name="group_id_=" id="group_id">
+                        	<?php
+							$group_list = $group_db->getGroupInfo();
+								foreach($group_list as $key => $value)
+								{	
+									$selected = ($this->group_datas['id'] == $key) ? 'selected=""selected' : '';							
+							?>
+								<option value="<?php echo $key; ?>" <?php echo $selected; ?> ><?php echo $this->escape($value); ?></option>
+							<?php	
+								}
+							?>
+                      	</select>
+                    </div>
+                    
+                    <div class="col clear">
+                    	<p><?php echo $this->translator->translator('hotels_block_simple_search_label_city','','Hotels'); ?></p>
+                  		<input type="hidden" name="group_id_=" id="group_id" value="<?php echo $this->group_datas['id']; ?>" /><input type="hidden" name="active_=" id="active" value="1" />
+                  		<input name="location_for_search_LIKE" type="text" id="location_for_search" size="48" value="Any" class="city"/>
+                    </div>
+                  
+					<div class="col clear">
+                   		<p><?php echo $this->translator->translator('hotels_block_simple_search_label_check_in','','Hotels'); ?></p>
+                      	<input name="check_in" type="text" id="check_in_search" size="15"/>
+                   	</div>
+                  
+                  	<div class="col">
+                  		<p><?php echo $this->translator->translator('hotels_block_simple_search_label_check_out','','Hotels'); ?></p>
+                  		<input name="check_out" type="text" id="check_out_search" size="15" />
+                  	</div>
+                  
+                  	<div class="clear">
+                  		<input type="submit" name="button" id="button" value="<?php echo $this->translator->translator('hotels_block_simple_search_label_btn','','Hotels'); ?>" />
+					</div>
+                    
+                    <div class="clear">
+                		<a href="Search-Hotels"><?php echo $this->translator->translator('hotels_front_page_advanced_search'); ?></a> &nbsp;&nbsp;&nbsp;
+                    	<a href="All-Hotels/<?php echo $this->group_datas['id']; ?>"><?php echo $this->translator->translator('hotels_block_view_all_link', $this->escape($this->group_datas['group_name'])); ?></a>
+					</div>
+                </form>
+			</div>
+        </div>
+    </div>
+	<!-- Banner End -->
+
+	<?php if($this->group_datas['featured_file_on'] == '1'){ ?> 
+	<div class="block block-featured">
+    	<div class="block-body">
+   			<h2><?php echo $this->translator->translator('hotels_block_featured_list_title'); ?></h2>
+            <div id="featured_list">
+				<?php						  
+                    if($this->view_featured_datas)
+                    {
+                        $j = 1;								
+                        foreach($this->view_featured_datas as $entry)
+                        {
+                            $hotels_image_val_arr = explode(',',$entry['hotels_image']);
+                            $hotels_image_no = count($hotels_image_val_arr);
+                            if($this->escape($entry['hotels_primary_image']))
+                            { 
+                                $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($entry['hotels_primary_image']); 
+                            }
+                            else
+                            { 
+                                if($this->escape($entry['hotels_image']))
+                                {										
+                                    $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($hotels_image_val_arr[0]); 
+                                }
+                                else
+                                {
+                                    $thumb_image = 'application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/no_image.png'; 
+                                }		
+                            }
+                            if($this->group_datas['file_thumb_width'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToHeight')
+                            { 
+                                $width = 'width="'.$this->escape($this->group_datas['file_thumb_width']).'"'; 
+                            }
+                            else
+                            {
+                                $width = '';
+                            } 
+                            if($this->group_datas['file_thumb_height'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToWidth')
+                            { 
+                                $height = 'height="'.$this->escape($this->group_datas['file_thumb_height']).'"'; 
+                            } 
+                            else
+                            {
+                                $height = '';
+                            }		
+                        
+                ?>
+                <div class="col">
+                    	<span class="block-title"><a href="<?php echo $this->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>" class="preview" link="" title="<?php echo $this->escape($entry['hotels_name']); ?>"><?php echo hotels_truncate($this->escape($entry['hotels_name']), 0, 4); ?></a></span>
+                        <div class="clear">
+                        <?php
+                            for($i = 1; $i < $maximum_stars_digit; $i++)
+                            {
+                                $hotel_stars = ($i <= $this->escape($entry['hotels_grade'])) ? '<img src="application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/star-small-active.png" />' : '<img src="application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/star-small-inactive.png" />';
+                                echo $hotel_stars.'&nbsp;';
+                            }
+                        ?>
+                        </div>
+                    
+                        <div class="img-wrapper">
+                            <a href="<?php echo $this->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>" class="preview" link="<?php echo $thumb_image; ?>"  title="<?php echo $this->escape($entry['hotels_name']); ?>">
+                                <img src="<?php echo $thumb_image; ?>" border="0" class="thumb" <?php echo $width." ".$height; ?>>
+                            </a>
+                            <div class="photo-count-container">
+                                <div class="photo-count">
+                                    <a href="<?php echo $this->url(array('module' => 'hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->escape($entry['hotels_title']),'tab' => 1 ),'Hotels-details/:hotels_title/:tab',true); ?>" title="<?php echo $this->translator->translator('hotels_front_page_hotels_click_view_listing'); ?>"><?php echo $this->translator->translator('hotels_front_page_hotels_photo_no',$hotels_image_no); ?></a>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="details">
+                            <span><?php echo $this->translator->translator('hotels_block_featured_label_location', '', 'Hotels'); ?></span> <?php echo $this->escape($entry['state_name'].' / '.$entry['city']); ?> <br />
+                            <?php if(!empty($entry['feature_distance_from_airport'])){ echo $this->escape($entry['feature_distance_from_airport']).' '.$this->translator->translator('hotels_front_page_distance'); }  ?><br />
+                            <span><?php echo $this->translator->translator('hotels_block_featured_label_description', '', 'Hotels'); ?></span> <?php echo hotels_truncate(strip_tags($this->escape($entry['hotels_desc'])), 0, 4); ?><br>
+                        </div>
+                </div>  
+                <?php	
+                    $j++;
+                    }
+                }
+                ?>
+            </div>
+        </div>
+   	</div>
+	<?php } ?>
+
+	<div class="block">
+    	<div class="block-body">
+			<?php  
+                $popular_hotels = $hotels_helper->getPopularHotels($this->group_datas['id']); 			
+            ?>		
+            <h2><?php echo $this->translator->translator('hotels_block_popular_list_title'); ?></h2>
+            <div class="list">
+                <ul>
+                <?php	
+                    if($this->view_latest_datas)
+                    {
+                        $l =1;
+                        foreach($popular_hotels as $entry)						
+                        {
+                        
+                            if($this->escape($entry['hotels_primary_image']))
+                            { 
+                                $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($entry['hotels_primary_image']); 
+                            }
+                            else
+                            { 
+                                if($this->escape($entry['hotels_image']))
+                                {
+                                    $hotels_image_val_arr = explode(',',$entry['hotels_image']);
+                                    $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($hotels_image_val_arr[0]); 
+                                }
+                                else
+                                {
+                                    $thumb_image = 'application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/no_image.png'; 
+                                }		
+                            }
+                            if($this->group_datas['file_thumb_width'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToHeight')
+                            { 
+                                $width = 'width="'.$this->escape($this->group_datas['file_thumb_width']).'"'; 
+                            }
+                            else
+                            {
+                                $width = '';
+                            } 
+                            if($this->group_datas['file_thumb_height'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToWidth')
+                            { 
+                                $height = 'height="'.$this->escape($this->group_datas['file_thumb_height']).'"'; 
+                            } 
+                            else
+                            {
+                                $height = '';
+                            }
+                ?>						
+                
+                    <li><a href="<?php echo $this->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>" class="preview" link="<?php echo $thumb_image; ?>" title="<?php echo $this->escape($entry['hotels_name']); ?>" width="300"><?php echo hotels_truncate($this->escape($entry['hotels_name']), 0, 3); ?></a></li>
+                                                                
+                <?php
+                        if($l % 4 == 0)
+                        {
+                            echo '</ul></div><div class="list"><ul>';
+                        }
+                            $l++;
+                        }
+                    }
+                ?>
+                </ul>			
+            </div>
+     	</div>
+  	</div>
+    
+  	<?php if($this->group_datas['latest_file_on'] == '1'){ ?> 
+	<div class="block">
+    	<div class="block-body">
+			<h2><?php echo $this->translator->translator('hotels_block_latest_list_title'); ?></h2>
+			<div class="list">
+				<ul>
+				<?php	
+					if($this->view_latest_datas)
+					{
+						$l =1;
+						foreach($this->view_latest_datas as $entry)						
+						{
+						
+							if($this->escape($entry['hotels_primary_image']))
+							{ 
+								$thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($entry['hotels_primary_image']); 
+							}
+							else
+							{ 
+								if($this->escape($entry['hotels_image']))
+								{
+									$hotels_image_val_arr = explode(',',$entry['hotels_image']);
+									$thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($hotels_image_val_arr[0]); 
+								}
+								else
+								{
+									$thumb_image = 'application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/no_image.png'; 
+								}		
+							}
+							if($this->group_datas['file_thumb_width'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToHeight')
+							{ 
+								$width = 'width="'.$this->escape($this->group_datas['file_thumb_width']).'"'; 
+							}
+							else
+							{
+								$width = '';
+							} 
+							if($this->group_datas['file_thumb_height'] && $this->group_datas['file_thumb_resize_func'] != 'resizeToWidth')
+							{ 
+								$height = 'height="'.$this->escape($this->group_datas['file_thumb_height']).'"'; 
+							} 
+							else
+							{
+								$height = '';
+							}
+				?>						
+					
+					<li><a href="<?php echo $this->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'details','hotels_title' => $this->escape($entry['hotels_title']) ),'Hotels-details/:hotels_title',true); ?>" class="preview" link="<?php echo $thumb_image; ?>" title="<?php echo $this->escape($entry['hotels_name']); ?>" width="300"><?php echo hotels_truncate($this->escape($entry['hotels_name']), 0, 3); ?></a></li>
+																
+				<?php
+					if($l % 4 == 0)
+					{
+						echo '</ul></div><div class="list"><ul>';
+					}
+						$l++;
+					}
+				}
+				?>
+				</ul>	
+			</div>
+		</div>
+	</div>    
+	<?php } ?>
+</div>

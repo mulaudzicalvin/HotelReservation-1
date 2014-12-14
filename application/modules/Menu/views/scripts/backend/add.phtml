@@ -1,0 +1,965 @@
+<div id="container">
+<?php if (!$this->allow()) : ?>
+	<div class="grid_12 t_a_bottom">
+		<?php echo $this->translator->translator('Member_Access_deny_desc'); ?>
+	</div>
+<?php else : 
+$locale_direction = Eicra_Global_Variable::getSession()->site_direction;
+$locale = Eicra_Global_Variable::getSession()->sess_lang;
+?>
+<style>
+.ui-front {
+    z-index:1000000 !important; /* The default is 100. !important overrides the default. */
+}
+</style>
+<script type="text/javascript">
+var window_box = '';
+var settingObj = {
+						grid_id : 'grid',
+						dest_url : "<?php echo $this->url( array('module' => 'Menu','controller' => 'Backend', 'action'  => 'getpages' ), 'adminrout',    true) ?>",
+						pageSize : '<?php echo Eicra_Global_Variable::getSession()->viewPageNum; ?>',
+						page: '',
+						common_action : {},
+						form_action : {
+											form_id: 'formMenu',
+											hasTinyMCE: false,
+											common_msg_field_id: 'actionMessage',
+											dialog_container_id:	'dialog_container',
+											dialog_progressbar_id:	'progressbar',
+											extra_field_for_reset: [
+												{field_id : 'module', field_value: '' , field_type : 'val'},
+												{field_id : 'manuTree', field_value: '' , field_type : 'html'}, 
+												{field_id : 'category_parent', field_value: '0' , field_type : 'val'},
+												{field_id : 'select_layout', field_value: '' , field_type : 'val'},
+												{field_id : 'menu_type', field_value: '' , field_type : 'val'},
+												{field_id : 'select_page', field_value: '' , field_type : 'val'},
+												{field_id : 'menu_image', field_value: '' , field_type : 'val'},
+												{field_id : 'page_select', field_value: '' , field_type : 'html'},
+												{field_id : 'create_new', field_value: '' , field_type : 'html'},
+												{field_id : 'selected_file_menu_image', field_value: '' , field_type : 'html'},
+												{field_id : 'required_title_label', field_value: '' , field_type : 'html'},
+												{field_id : 'dataId', field_value: '<?php echo $this->translator->translator("common_tree_root"); ?> (0)' , field_type : 'html'}
+											],
+											extra_function_for_reset: function(){
+												$('a.article_category_btn').css('display','none');
+												$('#external_link').css('display','none');
+												$('a.back_btn_link').attr('href','<?php echo $this->url( array("module" => "Menu","controller" => "backend", "action"  => "list" ,"group_id" => $param_group_id), "adminrout",    true) ?>');
+											},
+											category_tree:{
+												category_tree_id: 'manuTree',
+												category_tree_input_field_id : 'category_parent',
+												category_tree_input_html_id : 'dataId',
+												category_tree_dest_url: "<?php echo $this->url( array('module' => 'Menu','controller' => 'backend', 'action'     => 'parent' ), 'adminrout',    true) ?>",
+												tree_view: {
+													dragAndDrop : true,	
+													template: "<label><input type=\"radio\" name=\"radio\" />#= item.text #</label>",												
+													dataBound	: function(obj){
+															try
+															{															
+																var treeView = $("#"+settingObj.form_action.category_tree.category_tree_id).data('kendoTreeView');
+																var getitem = treeView.dataSource.get("0");
+																if(getitem)
+																{
+																	var selectitem = treeView.findByUid(getitem.uid);
+																	treeView.select(selectitem);
+																}
+															}
+															catch(e)
+															{
+																//alert(e.toSource());
+															}
+													},
+													dataSource :  {
+														transport: {
+																read: {
+																	url: "<?php echo $this->url( array('module' => 'Menu','controller' => 'backend', 'action'     => 'groupmenu' ), 'adminrout',    true) ?>",
+																	dataType: "json",
+																	type: "POST",
+																	data : {expanded : true}, // true is enable null is disable
+																	complete: function(e) {																		
+																		var json = $.parseJSON(e.responseText);	
+																		//alert(json.toSource());																																									
+																		if(json.status != 'ok')
+																		{
+																		   commonMsgDialog(settingObj, json.msg);
+																		}
+																		//$('#group_id_loader').html('');
+																	}
+																},
+																parameterMap: function(options, operation) {
+																	//alert(options.toSource());
+																	//$('#group_id_loader').html('<img src="application/modules/Administrator/layouts/scripts/images/loader/ajax_loader.gif" border="0" height="16" />');
+																	return options;
+																}
+															},
+															schema: {
+																data: 'TreeDataSource',
+																model: {
+																	id : 'id',
+																	text : 'text' ,
+																	hasChildren: 'hasChildren'  
+																}
+															}	
+													}
+												}
+											}
+									},
+						windowbox: {
+							windowbox_id: '#popup-confirm',
+							windowbox_settings:{
+								width	: '750px',					
+								actions: ["Minimize", "Maximize", "Close"],
+								title: "<?php echo html_entity_decode($this->translator->translator('menu_layout_panel'), ENT_QUOTES, 'UTF-8'); ?>",
+								modal: true,
+								refresh: function (e) {},
+								close: function (e) {																						 
+									 if(window_box){ window_box.data("kendoWindow").content("&nbsp;"); }
+								},
+								error: function (e) {													 
+									 commonMsgDialog(settingObj, e.xhr.responseText);
+								}
+							}
+						},
+						search_data : {},
+						batch:		false,
+						editable:	false,
+						scrollable: false,
+						dataBound: function(e) {	
+							putSelectedItem();
+							putMultiSelectedItems();							
+						},
+						filterable:{
+						  extra: true,
+						  messages: {
+							  info: "<?php echo $this->translator->translator("portfolio_filter_messages_info", '', 'Portfolio'); ?>", // sets the text on top of the filter menu
+							  filter: "<?php echo $this->translator->translator("portfolio_filter_messages_filter", '', 'Portfolio'); ?>", // sets the text for the "Filter" button
+							  clear: "<?php echo $this->translator->translator("portfolio_filter_messages_clear", '', 'Portfolio'); ?>", // sets the text for the "Clear" button
+					  
+							  // when filtering boolean numbers
+							  isTrue: "<?php echo $this->translator->translator("portfolio_filter_messages_isTrue", '', 'Portfolio'); ?>", // sets the text for "isTrue" radio button
+							  isFalse: "<?php echo $this->translator->translator("portfolio_filter_messages_isFalse", '', 'Portfolio'); ?>", // sets the text for "isFalse" radio button
+					  
+							  //changes the text of the "And" and "Or" of the filter menu
+							  and: "<?php echo $this->translator->translator("portfolio_filter_messages_and", '', 'Portfolio'); ?>",
+							  or: "<?php echo $this->translator->translator("portfolio_filter_messages_or", '', 'Portfolio'); ?>"
+						  },
+						  operators: {
+							  string: {
+								  startswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_startswith", '', 'Portfolio'); ?>",
+								  contains: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_contains", '', 'Portfolio'); ?>",
+								  doesnotcontain: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_doesnotcontain", '', 'Portfolio'); ?>",
+								  endswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_endswith", '', 'Portfolio'); ?>",
+								  eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_eq", '', 'Portfolio'); ?>",
+								  neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_neq", '', 'Portfolio'); ?>"
+							  },
+							  number: {
+								  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_neq", '', 'Portfolio'); ?>",
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lt", '', 'Portfolio'); ?>"
+							  }
+						  }
+						},
+						model: {
+                                    fields: {
+                                        order	: { type: "number" },
+                                        id		: { type: "number" },
+                                        name	: { type: "string" }
+                                    }
+                                },					
+						column_fields: [
+											{ field:"checkAll", headerTemplate: '<input type="checkbox" name="checkAll" id="checkAll" class="checkAll_btn"  />',	template: '# if(insert_button_enable == true && active_status == true){ #<input type="checkbox" value="${id}" class="check_btn" /># } #' , width: 28, filterable: false, sortable: false, columnMenu: false},  // For Header : #= Selected ? checked="checked" : "" #       For Body :  # (checkAll) ? checked="checked" :  ""  #  # if(checkAll){ # checked # } #
+											{ 
+												field: "order", 		
+												title:	"<?php echo $this->translator->translator('common_order'); ?>", 
+												width: 70,												
+												attributes:{ 'align' : 'center' },
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+															format: "0",
+															min: 1,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}
+											},
+											{ 
+												field: "id", 		
+												title: 	"<?php echo $this->translator->translator('menu_list_page_id'); ?>", 
+												width: 70, 
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+															format: "0",
+															min: 1,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}  
+											},
+											{ field: "name", title:	"<?php echo $this->translator->translator('menu_list_page_menu_name'); ?>", template: '<a href="javascript:void(0);" class="# if(active_status == true){ #insert_item# } #">#= name #</a> # if(active_status != true){ # #= \'<span style="color:\\#FF0000">(<?php echo $this->translator->translator("common_unpublished_language"); ?>)</span>\' # # } #' }											
+										],
+						columnMenu:	{
+							columns: true,
+							messages: {
+									sortAscending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_ascending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									sortDescending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_descending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									filter: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_filter", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									columns: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_columns", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+								}
+						},						
+						messages: {
+										display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+										empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+										page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+										of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+										itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+										first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+										previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+										next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+										last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+										refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+										
+										common_msg_dialog_id 		:	'dialog_msg',
+										common_confirn_dialog_id	:	'dialog-confirm',
+										common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",										
+										common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+										common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+										common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+										common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+										common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>"
+									}
+						};
+
+function popupConfirmDialog(inputHtml)
+{	
+	window_box = (!window_box) ? kendoWindowBox(settingObj) : window_box;														
+	window_box.data("kendoWindow").refresh({
+					template: inputHtml
+				}).center().open();
+}
+
+function closePopupConfirmDialog()
+{
+	if(window_box){ window_box.data("kendoWindow").close(); }
+}
+
+function popupLayoutDialog(inputHtml)
+{
+	$("#popup-layout-dialog").html(inputHtml).dialog({
+				resizable: false,
+				width:750,
+				height:600,
+				modal: true,
+				show: 'fade',
+				hide: 'explode',
+				dialogClass: 'ui-dialog',
+				buttons: false
+	});
+}
+
+function closePopupLayoutDialog()
+{
+	$('#popup-layout-dialog').dialog('option','hide','explode').dialog('close');	
+}
+
+function  getSerializedData(layout_obj)
+{
+	var htmlInput = '<fieldset class="fieldset">';
+		htmlInput += '<legend class="legend"><?php echo $this->translator->translator("menu_layout_select"); ?></legend>';
+		htmlInput += '<div><div class="col-1">';
+		htmlInput += '	<div class="label"><?php echo $this->translator->translator("menu_system_link"); ?></div><hr class="dashed"/>';
+		htmlInput += '	<div class="layout-option"><a href="javascript:void(0);" rel="ext" class="put_layout"><?php echo $this->translator->translator("menu_system_external"); ?></a></div>';
+		htmlInput += '	<span class="layout-info"><div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->translator->translator("menu_system_external"); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div></span>';
+		htmlInput += '</div>';
+		
+		
+		var col_no = '1';
+	for(var i = 0; i < layout_obj.length; i++)
+	{
+		col_no = (i % 2 == 0) ? '2' : '1';
+		
+		htmlInput += '<div class="col-'+col_no+'">';
+		htmlInput += '	<div class="label">'+layout_obj[i].module+'</div><hr class="dashed"/>';
+		for(var j = 0;j < layout_obj[i].layouts.length; j++)
+		{
+			htmlInput += '	<div class="layout-option"><a href="javascript:void(0);" rel="'+layout_obj[i].module+','+layout_obj[i].layouts[j].name+','+layout_obj[i].layouts[j].table+'" class="put_layout">'+layout_obj[i].layouts[j].description+'</a></div>';
+			htmlInput += '	<span class="layout-info"><div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="'+layout_obj[i].module+','+layout_obj[i].layouts[j].img+'"><p><span class="ui-icon ui-icon-info"></span></p></div></div></span>';
+		}
+		htmlInput += '</div>';
+		
+		
+		
+	}
+	htmlInput += '</div></fieldset>';
+	return htmlInput;
+}
+
+function popupLayoutImage()
+{   
+   $('div.ui-widget-header').tooltip({
+			content: function() {
+				var element = $( this );
+				var rel = element.attr('title');
+				if(rel)
+				{
+					var img_arr = rel.split(',');
+					if(img_arr[1])
+					{					
+						var img_path = '<?php echo $this->serverUrl().$this->baseUrl(); ?>/application/modules/'+img_arr[0]+'/images/'+img_arr[1];
+						return  "<img  src='"+img_path+"' width='250' />";
+					}
+					else
+					{
+						return rel;
+					}
+				}
+			},
+			track: true
+		});	
+}
+
+function putLayoutData()
+{
+	$("a.put_layout").click(function() {
+	
+		$('#page_select').html('');	
+		$('#select_page').val('');	
+		$('a.article_category_btn').css('display','none');	
+		$('#external_link').css('display','none');	
+		$('#required_title_label').html('');
+		$('#create_new').html('');			
+			
+		var self = this;
+		var rel = $(self).attr('rel');
+		var layout_arr = rel.split(','); 
+		$('#module').val(layout_arr[0]);
+		$('#select_layout').val(rel);
+		$('#menu_type').val($(self).text());
+		if(layout_arr[0] == 'ext')
+		{
+			$('#required_title_label').html('<?php echo $this->translator->translator("required_title_label_link"); ?>');
+			$("#accordion").accordion({
+				active: 0,
+				collapsible:true,
+				heightStyle: "content"	
+			});
+			$('#external_link').css('display','inline');		
+		}
+		else
+		{			
+			$('#external_link').css('display','none');	
+			$('#external_link').val('');			
+			if(layout_arr[3])
+			{
+				if(layout_arr[3] == 'articles')
+				{
+					$('#create_new').html('<hr class="dashed"/> <span class="other-btn ui-widget-content-1"><a href="javascript: void(0)" class="new_page_btn"><span class="icon add"><?php echo $this->translator->translator("menu_page_popup_button"); ?></span></a></span>');
+					popup_function();
+				}
+				$("#accordion").accordion({
+					active: 0,
+					collapsible:true,
+					autoHeight: true,
+					clearStyle: true 	
+				});
+				$('a.article_category_btn').css('display','inline');
+				$('#required_title_label').html('<?php echo $this->translator->translator("required_title_label_item"); ?>');
+			}
+			else
+			{
+				$("#accordion").accordion({
+					active: false,
+					collapsible:true,
+					autoHeight: true,
+					clearStyle: true 	
+				});
+				$('#required_title_label').html('');
+				$('a.article_category_btn').css('display','none');
+			}				
+		}
+		closePopupLayoutDialog();
+	});
+}
+
+$(document).ready(function() {
+	floatingbar('#floatingbar',"#button_top_bar",null);	
+	getPages();
+	$("a[rel='layout_btn']").click(function() {				
+		$.ajax({
+			url: "<?php echo $this->url( array('module' => 'Menu','controller' => 'backend', 'action'     => 'types' ), 'adminrout',    true) ?>",
+			  	type: 'POST',
+			  	data: { test : 'test' },
+				beforeSend: function(){							
+						popupLayoutDialog('<div class="loader-big"><img src="application/modules/Administrator/layouts/scripts/images/loader/loader.gif" border="0"/></div>');
+					 },
+				success: function(response){
+					//alert(response);								
+					var json_arr = eval("("+response+")");					
+										
+					if(json_arr.status == 'ok')
+					{
+						var htmlInput = getSerializedData(json_arr.layout_obj);	
+						popupLayoutDialog(htmlInput);	
+						putLayoutData();
+						popupLayoutImage();	
+						$("#accordion").accordion({
+							active: false,
+							collapsible:true,
+							autoHeight: true,
+							clearStyle: true 	
+						});																				
+					}
+					else
+					{
+						popupLayoutDialog(json_arr.msg);
+					}
+				}
+		});	
+	});	
+	$("#accordion").accordion( {
+			active: false,
+			collapsible:true,
+			autoHeight: true,
+			clearStyle: true 			
+			//icons: { 'header': 'ui-icon-plus', 'headerSelected': 'ui-icon-minus' }
+		});
+		
+	<?php if($this->article_info){ ?>
+		
+		$("#simpleGrid").kendoGrid({ 
+				scrollable: false, 
+				dataSource: { data: [ { order: '<?php echo $this->article_info['order']; ?>', id: '<?php echo $this->article_info['article_id']; ?>', name: '<?php echo $this->article_info['article_name']; ?>'} ] }, 
+				columns: [ { field: "order", title:	"<?php echo $this->translator->translator('common_order'); ?>", width: 10, attributes:{ 'align' : 'center' } }, { field: "id", title: 	"<?php echo $this->translator->translator('menu_list_page_id'); ?>", width: 10 }, { field: "name", title:	"<?php echo $this->translator->translator('menu_list_page_menu_name'); ?>" } ] 
+		});
+		
+		$("#accordion").accordion( {
+			active: 0,
+			collapsible:true,
+			autoHeight: true,
+			clearStyle: true 			
+		});
+		
+	<?php } ?>
+	
+	$('#menu_name').focus();
+	
+	$('a.upload_btn').click(function() {
+		var group_id = $("#group_id").val();
+		$('input[name="primary_id_field_value"]').val(group_id);
+		
+		var file_content = $('#menu_image').val();
+		$('input[name="file_content"]').val(file_content);	
+		
+		$("#i-popup-form").attr("width",'550');
+		$("#i-popup-form").attr("height",'390');
+		$('a.select_file_btn').parents('span:first').css('display','none');
+		$('a.select_image_btn').parents('span:first').css('display','inline');
+		
+		var src = $("#i-popup-form").attr("src");	
+		$("#i-popup-form").attr("src", 'application/modules/Administrator/layouts/scripts/images/loader/manager_loader.gif');
+		$("#i-popup-form").html('');
+		
+		if(group_id != null && group_id != "")
+		{
+			$("#popupForm").attr("action", "<?php echo $this->url( array('module' => 'Portfolio','controller' => 'frontend', 'action' => 'manager' ), 'adminrout',    true) ?>");			
+			$('#popup-form').dialog({
+					autoOpen: false,
+					title : "<?php echo $this->translator->translator("common_dialog_msg",$this->translator->translator("menu_accordon_image_option")); ?>",
+					width: 800,
+					height: 600,
+					show: 'fade',			
+					modal: true
+				}).dialog('open');
+			$('#popupForm').submit();	
+		}
+		else
+		{
+			msg = "<?php echo $this->translator->translator("menu_group_selected_err"); ?>";
+			commonMsgDialog(settingObj, msg);
+		}
+	});		
+		
+	$("#popup-form").dialog({
+		autoOpen: false,
+		width: 1250,
+		height: 780,
+		show: 'fade',			
+		modal: true
+	});	
+	
+	$('a.select_image_btn').click(function() {		 
+		
+			var currentIFrame = $('#i-popup-form');
+			var selected_files = currentIFrame.contents().find("input[name='selected_files']").val();
+			var primary_file_field = currentIFrame.contents().find("input[name='primary_file_field']").val();
+			var file_path	=	currentIFrame.contents().find("input[name='file_path']").val();
+			var selected_files_arr = (selected_files != '' && selected_files != null) ? selected_files.split(',') : new Array();	
+			if(selected_files_arr.length == '0')
+			{
+				var msg = '<?php echo $this->translator->translator("insert_selected_file_err"); ?>';				
+				commonMsgDialog(settingObj, msg);
+			}
+			else
+			{
+				var img_path = file_path +'/'+ selected_files_arr[0]; 	
+				var del_link = '<a href="javascript:void(0)" class="delete_image_lnk" rel="'+selected_files_arr[0]+'"><?php echo html_entity_decode($this->translator->translator("common_delete"), ENT_QUOTES, "UTF-8"); ?></a>';						
+				var img_code = '<div class="upload-img box"><span><div class="thumb"><img src="'+img_path+'" width="30" height="30" class="bdr" /></div><br /><br />&nbsp;&nbsp;'+del_link+'&nbsp;&nbsp;&nbsp;&nbsp;</span></div>';
+				$('#selected_file_'+primary_file_field).html(img_code);
+				$('#'+primary_file_field).val(selected_files_arr[0]);
+				$("#i-popup-form").attr("src", 'application/modules/Administrator/layouts/scripts/images/loader/manager_loader.gif');
+				$("#i-popup-form").html('');
+				$("#popup-form").dialog('option','hide','explode').dialog('close');
+				deleteFiles("<?php echo $this->translator->translator('gallery_img_main','', 'gallery'); ?>", "<?php echo $this->translator->translator('gallery_img_related','', 'gallery'); ?>", "<?php echo $this->url( array('module' => 'Portfolio','controller' => 'frontend', 'action'     => 'remove' ), 'adminrout',    true) ?>", "<?php echo $this->translator->translator('common_delete_title'); ?>");	
+				commonImageThumbnil();
+			}
+		});
+	
+	$('a.select_file_btn').click(function() {			
+		var currentIFrame = $('#i-popup-form');
+		var last_id = currentIFrame.contents().find("#last_id").val();
+		var article_name_field = currentIFrame.contents().find("#article_name_field").val();
+		if(last_id != '' && article_name_field != '')
+		{
+			putNewItem(last_id,last_id,article_name_field);
+			$("#i-popup-form").attr("src", "application/modules/Administrator/layouts/scripts/images/loader/manager_loader.gif");
+			$("#i-popup-form").html('');	
+			$("#popup-form").dialog('option','hide','explode').dialog('close');
+		}
+		else
+		{
+			var msg = "<?php echo $this->translator->translator('menu_page_insert_page_err'); ?>";
+			commonMsgDialog(settingObj, msg);
+		}					
+	});
+	
+	$('a.close_dialog_btn').click(function() {	
+		$("#i-popup-form").attr("src", "");
+		$("#i-popup-form").html('application/modules/Administrator/layouts/scripts/images/loader/manager_loader.gif');	 
+		$("#popup-form").dialog('option','hide','explode').dialog('close');			
+	});
+
+	$('a.reset_btn').click(function() {			
+		 commonResetFormFields(settingObj);
+		 commonRemoveFormError(settingObj);		
+	});
+	
+	$('a.add_menu_btn').click(function() {
+				
+		var formData = commonGetFormData(settingObj.form_action.form_id, settingObj.form_action.hasTinyMCE);
+		var layout_arr 	= formData.select_layout.split(',');
+		if(formData.module == 'ext' && ($('#external_link').val() == '' || $('#external_link').val() == null))
+		{	
+			var msg = "<?php echo $this->translator->translator('menu_ext_link_empty'); ?>";
+			commonMsgDialog(settingObj, msg);
+		}
+		else
+		{	
+			if(layout_arr[3] && ($('#select_page').val() == '' || $('#select_page').val() == null))
+			{
+				var msg = "<?php echo $this->translator->translator('menu_select_item_empty'); ?>";
+				commonMsgDialog(settingObj, msg);
+			}
+			else
+			{
+				$.ajax({
+					url: "<?php echo $this->url( array('module' => 'Menu','controller' => 'Backend', 'action'     => 'add' ), 'adminrout',    true) ?>",
+						type: 'POST',
+						data: formData ,
+						beforeSend: function(){						
+								commonRemoveFormError(settingObj);
+								commonOpenLoaderDialog(settingObj);				
+							 },
+						success: function(response){
+						//alert(response);					
+						var json_arr = eval("("+response+")");					
+						commonCloseLoaderDialog(settingObj);					
+						if(json_arr.status == 'ok')
+						{
+							$('#actionMessage').html(succMsgDesign(json_arr.msg));						
+							commonResetFormFields(settingObj);							
+						}
+						else if(json_arr.status == 'errV')
+						{
+							$('#actionMessage').html(errMsgDesign("<?php echo $this->translator->translator('common_err'); ?>"));
+													
+							for(var i= 0; i < json_arr.msg.length; i++)
+							{
+								focusFirst(json_arr.msg[i].key, json_arr.msg[i].value, i);
+								commonAddFormError(json_arr.msg[i].key,json_arr.msg[i].value);							
+							}
+						}
+						else
+						{
+							$('#actionMessage').html(errMsgDesign(json_arr.msg));
+						}
+					},
+					error: function(xhr, status, error){
+						commonCloseLoaderDialog(settingObj);
+						var msg = "Error! " + xhr.status + " " + error;				
+						$('#actionMessage').html(errMsgDesign(msg));
+					}
+				});
+			}		
+		}	
+	});
+
+	
+
+/***********************************Get Menu Group***************************************/
+	$('select[name="group_id"]').change(function() {		
+		var group_id = $('#group_id').val();
+		$("#"+settingObj.form_action.category_tree.category_tree_input_html_id).html('<?php echo $this->translator->translator("common_tree_root"); ?> (0)');
+		$("#"+settingObj.form_action.category_tree.category_tree_input_field_id).val('0');
+		
+		if(group_id != '')
+		{
+			settingObj.form_action.category_tree.tree_view.dataSource.transport.read.data['grp_id'] = group_id; 
+			//settingObj.form_action.category_tree.tree_view.dataSource.transport.read.data['id'] = '35'; 
+			$('a.back_btn_link').attr('href','Menu/backend/list/group_id/'+group_id);
+			commonKendoTreeGen(settingObj);
+		}
+		else
+		{	
+			commonDestroyKendoTreeGen(settingObj);					
+			$('a.back_btn_link').attr('href','Menu/backend/list');
+		}		
+		$('#group_id_err').html('');		
+	});	
+	
+});
+/********************************Get Page Function*******************************************/
+function getPages()
+{
+	$('a.article_category_btn').unbind('click');
+	$('a.article_category_btn').click(function() {	
+		var layout = $('#select_layout').val();
+		//alert(layout);		
+		if(layout != '')
+		{
+			layout_arr = layout.split(',');
+			settingObj.search_data['layout_name'] =  layout;
+			var insert_button = (layout_arr[3] && layout_arr[3] == 'articles') ? '<div class="button-container clr"><span class="button ui-widget-content-1"><a class="article_insert_btn" href="javascript:void(0);"><span class="icon insert"><?php echo $this->translator->translator("menu_layout_select_all"); ?></span></a></span></div>' : '';
+			var inputHTML = '<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>><div id="grid"></div></div>'+insert_button;
+			putPageResults(inputHTML);			
+		}
+		else
+		{
+			var msg = "<?php echo $this->translator->translator('menu_layout_not_selected'); ?>";
+			commonMsgDialog(settingObj, msg);
+		}	
+	});
+}
+
+function putSelectedItem()
+{
+	$('a.insert_item').unbind('click');
+	$('a.insert_item').click(function(){
+		var self = this;				
+		//get current dataItem
+		var grid  = $("#"+settingObj.grid_id).data("kendoGrid");
+		var rowData = grid.dataItem($(self).closest("tr"));
+		var inputHTML = '<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>><div id="simpleGrid"></div></div>';
+		$('#page_select').html(inputHTML);
+		$('#select_page').val(rowData.id);
+		//alert(rowData.toSource());
+		
+		$("#simpleGrid").kendoGrid({ 
+				scrollable: false, 
+				dataSource: { data: [ rowData ] }, 
+				columns: [ { field: "order", title:	"<?php echo $this->translator->translator('common_order'); ?>", width: 10, attributes:{ 'align' : 'center' } }, { field: "id", title: 	"<?php echo $this->translator->translator('menu_list_page_id'); ?>", width: 10 }, { field: "name", title:	"<?php echo $this->translator->translator('menu_list_page_menu_name'); ?>" } ] 
+		});		
+		closePopupConfirmDialog();
+	});	
+}
+
+function putNewItem(order_id,id,name)
+{
+	var rowData = {order: order_id, id: id, name: name};
+	var inputHTML = '<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>><div id="simpleGrid"></div></div>';
+	$('#page_select').html(inputHTML);
+	$('#select_page').val(rowData.id);	
+	
+	$("#simpleGrid").kendoGrid({ 
+			scrollable: false, 
+			dataSource: { data: [ rowData ] }, 
+			columns: [ { field: "order", title:	"<?php echo $this->translator->translator('common_order'); ?>", width: 10, attributes:{ 'align' : 'center' } }, { field: "id", title: 	"<?php echo $this->translator->translator('menu_list_page_id'); ?>", width: 10 }, { field: "name", title:	"<?php echo $this->translator->translator('menu_list_page_menu_name'); ?>" } ] 
+	});		
+}
+
+function putMultiSelectedItems()
+{
+	$('a.article_insert_btn').unbind('click');
+	$('a.article_insert_btn').click(function(){
+		var self = this;	
+		if($('input.check_btn:checked').length > 0)
+		{	
+			//get current dataItem
+			var grid  = $("#"+settingObj.grid_id).data("kendoGrid");
+			var rowDatas = [];
+			var select_page = [];
+			$.each($('input.check_btn:checked'), function(key, obj){
+				rowDatas[key] = grid.dataItem($(obj).closest("tr"));
+				select_page[key] = rowDatas[key]['id'];
+			});
+			
+			var inputHTML = '<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>><div id="simpleGrid"></div></div>';
+			$('#page_select').html(inputHTML);
+			$('#select_page').val(select_page.join(','));			
+			
+			$("#simpleGrid").kendoGrid({ 
+					scrollable: false, 
+					dataSource: { data: rowDatas }, 
+					columns: [ { field: "order", title:	"<?php echo $this->translator->translator('common_order'); ?>", width: 10, attributes:{ 'align' : 'center' } }, { field: "id", title: 	"<?php echo $this->translator->translator('menu_list_page_id'); ?>", width: 10 }, { field: "name", title:	"<?php echo $this->translator->translator('menu_list_page_menu_name'); ?>" } ] 
+			});			
+			closePopupConfirmDialog();
+		}
+		else
+		{
+			var msg = "<?php echo $this->translator->translator('item_selected_err'); ?>";
+			commonMsgDialog(settingObj, msg);
+		}
+	});	
+}
+
+function putPageResults(inputHTML)
+{
+	popupConfirmDialog(inputHTML);
+	commonGrid(settingObj);
+}
+
+
+/************************************Popup Function******************************************/
+function popup_function()
+{	
+	$('a.new_page_btn').unbind('click');
+	$('a.new_page_btn').click(function() {	
+		$('a.select_image_btn').parents('span:first').css('display','none');
+		$('a.select_file_btn').parents('span:first').css('display','inline');
+		$("#i-popup-form").attr("width",'1200');
+		$("#i-popup-form").attr("height",'600');
+		var src = $("#i-popup-form").attr("src");
+		$("#i-popup-form").attr("src", "<?php echo $this->url( array('module' => 'Articles','controller' => 'backend', 'action'     => 'add', 'popup' => 'popup' ), 'adminrout',    true) ?>");			
+		$('#popup-form').dialog({
+				autoOpen: false,
+				title : '<?php echo $this->translator->translator("menu_page_popup_dialog"); ?>',
+				width: '95%',
+				height: 590,
+				show: 'fade',			
+				modal: true
+			}).dialog('open');			
+	});			
+}
+</script>
+
+<div class="title-container">
+	<div class="menu-add"><h1><?php echo $this->translator->translator('menu_add_page_name'); ?></h1></div>
+    
+    <div class="button-container">
+        <span class="button  ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Menu','controller' => 'Backend', 'action'     => 'list' ), 'adminrout',    true) ?>" class="back_btn_link"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('common_reset'); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="add_menu_btn"><span class="icon save"><?php echo $this->translator->translator('common_save'); ?></span></a></span>
+    </div>
+</div>
+
+<form name="formMenu" id="formMenu" method="post">
+<div class="content-container">
+	<div id="sidebar-inner">
+    	<div id="nav" <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>>
+    		<div class="nav-header"><div class="nav-title"><?php echo $this->translator->translator('menu_page_menu_tree'); ?></div></div>
+    		<div id="manuTree" class="nav-body treebody">
+           		&nbsp;	
+            </div>
+       	</div>
+    </div>
+    
+    <div id="content-inner-middle">
+    	<div id="actionMessage"></div>
+        <div id="button_top_bar"></div>
+        <div id="generalInfo">
+            <fieldset class="fieldset">
+                <legend class="legend"><?php echo $this->translator->translator('menu_add_page_info'); ?></legend>
+                <div class="form">
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->menu_name->getLabel(); ?><span class="required">*</span>
+                        </div>
+                        
+                        <div class="field">
+                            <?php echo $this->menuForm->menu_name; ?>
+                            <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-state-default ui-corner-all" title="<?php echo $this->escape($this->menuForm->menu_name->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                            <div class="input-errors" id="menu_name_err"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->menu_title->getLabel(); ?><span class="required">*</span>
+                        </div>
+                        
+                        <div class="field">
+                            <?php echo $this->menuForm->menu_title; ?>
+                            <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->menuForm->menu_title->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                            <div class="input-errors" id="menu_title_err"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->show_after_login->getLabel(); ?>
+                        </div>
+                        
+                        <div class="field">
+                            <?php echo $this->menuForm->show_after_login; ?>
+                            <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->menuForm->show_after_login->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                            <div class="input-errors" id="show_after_login_err"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->target->getLabel(); ?><span class="required">*</span>
+                        </div>
+                        
+                        <div class="field">
+                            <?php echo $this->menuForm->target; ?>
+                            <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->menuForm->target->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                            <div class="input-errors" id="target_err"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->group_id->getLabel(); ?><span class="required">*</span>
+                        </div>
+                        
+                        <div class="field">
+                            <?php echo $this->menuForm->group_id; ?><span id="group_id_loader"></span>
+                            <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->menuForm->group_id->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                            <div class="input-errors" id="group_id_err"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->parent->getLabel(); ?>
+                        </div>
+                        
+                        <div class="field">
+                            <span id="dataId"><?php echo $this->translator->translator("menu_page_menu_root"); ?> (0)</span><?php echo $this->menuForm->parent; ?>
+                        </div>
+                    </div>
+                    
+                    <div class="form-row">
+                        <div class="label">
+                            <?php echo $this->menuForm->menu_type->getLabel(); ?><span class="required">*</span>
+                        </div>
+                        
+                        <div class="field">
+                            <?php echo $this->menuForm->module; echo $this->menuForm->select_layout; echo $this->menuForm->menu_type; ?>
+                            <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->menuForm->menu_type->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                            <span class="select-btn ui-widget-content-1"><a rel="layout_btn" href="javascript:void(0);"><span class="icon select"><?php echo $this->translator->translator('menu_module_select'); ?></span></a></span>
+                          	<div class="input-errors" id="menu_type_err"></span>
+                        </div>
+                    </div>
+                </div>
+              	</div>
+            </fieldset>
+        </div>
+	</div>
+
+    <div id="sidebar-inner-right">
+    	<div id="accordion">
+        	<h3><a href="#"><?php echo $this->translator->translator('menu_accordon_required_setting'); ?></a></h3>
+			<div>
+            	<input type="hidden" name="select_page" id="select_page" value="<?php echo $this->article_info['article_id']; ?>"/><span id="required_title_label" class="label"><?php if($this->article_info){ $button_style = 'display:inline-block;'; echo $this->translator->translator('required_title_label_item'); }else{ $button_style = 'display:none;'; } ?></span>
+
+              	<input type="text" name="external_link" id="external_link" value="" style="display:none;" size="18" />
+                
+                <span class="select-btn ui-widget-content-1"><a class="article_category_btn" href="javascript:void(0);" style="<?php echo $button_style; ?>">
+                    <span class="icon select"><?php echo $this->translator->translator('menu_module_select'); ?></span></a>
+                </span>
+                <span id="create_new"></span>
+                <div class="input-errors" id="select_page_err"></div><br />
+                <div class="chart">
+                	<div id="page_select" style="min-height:100px;">
+                	<?php if($this->article_info){ ?>
+                    	<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>><div id="simpleGrid"></div></div>
+                    <?php } ?>
+                	</div>
+                </div>			
+			</div>
+            
+			<h3><a href="#"><?php echo $this->translator->translator("menu_accordon_image_option"); ?></a></h3>
+				<div>
+					<div class="left-float">
+                    <span class="label"><?php echo $this->menuForm->menu_image->getLabel(); ?></span>
+					<?php echo $this->menuForm->menu_image; ?><span class="select-btn ui-widget-content-1"><a class="upload_btn" href="javascript:void(0);"><span class="icon select"><?php echo $this->translator->translator('menu_module_select'); ?></span></a></span>
+					</div>
+					<span id="selected_file_menu_image"></span>
+				</div>
+			<h3><a href="#"><?php echo $this->translator->translator('menu_accordon_template_setting'); ?></a></h3>
+				<div>
+					<span class="label"><?php echo $this->menuForm->menu_template->getLabel(); ?></span>
+					<?php echo $this->menuForm->menu_template; ?>		
+				</div>
+		</div>
+        <div id="popup-layout-dialog" title="<?php echo $this->translator->translator('menu_layout_panel'); ?>"></div>
+		<div id="popup-confirm" title="<?php echo $this->translator->translator('menu_layout_panel'); ?>"></div>	
+		<div id="dialog_msg" title="<?php echo $this->translator->translator('common_dialog_msg',$this->translator->translator('menu_add_page_name')); ?>"></div>
+		<div id="dialog_container" style="display:none" title="<?php echo $this->translator->translator('common_processing_language'); ?>">
+			<div id="progressbar" ></div>	
+		</div>
+	</div>
+    
+    <div class="button-container clr">
+        <span class="button  ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Menu','controller' => 'Backend', 'action'     => 'list' ), 'adminrout',    true) ?>" class="back_btn_link"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('common_reset'); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="add_menu_btn"><span class="icon save"><?php echo $this->translator->translator('common_save'); ?></span></a></span>
+    </div>
+</div>
+</form>
+<?php endif; ?>
+
+<div id="floatingbar">
+	<h1><?php echo $this->translator->translator('menu_add_page_name'); ?></h1>
+    
+    <div class="button-container">
+        <span class="button  ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Menu','controller' => 'Backend', 'action'     => 'list' ), 'adminrout',    true) ?>"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('common_reset'); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="add_menu_btn"><span class="icon save"><?php echo $this->translator->translator('common_save'); ?></span></a></span>
+    </div>
+</div>
+
+<div id="popup-form" title="<?php echo $this->translator->translator('menu_page_popup_dialog'); ?>">	
+	<div>
+    	<form id="popupForm" target="i-popup-form" method="post" action="" >
+            <input type="hidden" name="table_name" value="menu_group"/>
+            <input type="hidden" name="primary_id_field" value="id"/>
+            <input type="hidden" name="primary_id_field_value" value=""/>
+            <input type="hidden" name="primary_file_field" value="menu_image"/>
+           	<input type="hidden" name="file_content"  value=""/>       
+            <input type="hidden" name="file_path_field" value="file_path_menu_image"/>
+            <input type="hidden" name="file_extension_field" value="file_type"/>
+            <input type="hidden" name="file_max_size_field" value="file_max_size"/>
+    	</form>
+    	<iframe id="i-popup-form" name="i-popup-form" src="application/modules/Administrator/layouts/scripts/images/loader/manager_loader.gif" class="iframe-article"></iframe>        	
+    </div>
+    <div class="button-container">
+        <span class="button  ui-widget-content-1"><a href="javascript:void(0);" class="select_file_btn"><span class="icon insert"><?php echo $this->translator->translator("menu_page_popup_insert"); ?></span></a></span>
+        <span class="button  ui-widget-content-1" style="display:none;"><a href="javascript:void(0);" class="select_image_btn"><span class="icon insert"><?php echo $this->translator->translator("menu_page_popup_insert_image"); ?></span></a></span>
+        <span class="button  ui-widget-content-1"><a href="javascript:void(0);" class="close_dialog_btn"><span class="icon close"><?php echo $this->translator->translator("common_close"); ?></span></a></span>
+    </div>
+</div>
+</div>

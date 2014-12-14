@@ -1,0 +1,148 @@
+<?php
+class featured_autos_gallery
+{
+	protected	$_group = 6;
+	protected	$_limit = 15;
+	protected	$_DBconn;
+	protected	$_front_template;
+	protected	$_view;
+	
+	public function __construct($view) 
+	{
+		$this->_front_template = Zend_Registry::get('front_template'); 
+		$this->_view =	$view;
+		//DB Connection
+		$this->_DBconn = Zend_Registry::get('msqli_connection');
+		$this->_DBconn->getConnection();
+	}
+	
+	public function truncate($phrase,$start_words, $max_words)
+	{
+	   $phrase_array = explode(' ',$phrase);
+	   if(count($phrase_array) > $max_words && $max_words > 0)
+		  $phrase = implode(' ',array_slice($phrase_array, $start_words, $max_words)).'...';  
+	   return $phrase;
+	}
+	
+	public function class_body()
+	{
+		$translator = Zend_Registry::get('translator');	
+		$selectGroup = $this->_DBconn->select()
+					->from(array('gi' => Zend_Registry::get('dbPrefix').'gallery_group'), array('*'))
+					->where('gi.id = ?', $this->_group);
+		$galleryGroupInfo = $selectGroup->query()->fetchAll(); 
+		
+		$selectGP = $this->_DBconn->select()
+						->from(array('ga' => Zend_Registry::get('dbPrefix').'gallery_product'), array('*'))
+						->where('ga.group_id = ?', $this->_group)
+						->where('active = ?','1')
+						->where('featured = ?','1')
+						->order($galleryGroupInfo[0]['featured_file_sort']." ".$galleryGroupInfo[0]['featured_file_order'])
+						->limit($galleryGroupInfo[0]['featured_file_num_per_page']);
+		$gCatInfo =  $selectGP->query()->fetchAll();	
+		
+		//GET MENU TITLE FOR LINK
+		$selectMenu = $this->_DBconn->select()
+								->from(array('ma' => Zend_Registry::get('dbPrefix').'menu_assign'), array('ma.menu_id','ma.id'))
+								->where('ma.module_name = ?', 'Gallery')
+								->where('ma.controller_name = ?', 'frontend')
+								->where('ma.action_name = ?', 'view')
+								->limit(1);
+		$assign_menu =  $selectMenu->query()->fetchAll();
+		
+		$selectMenuTitle = $this->_DBconn->select()
+								->from(array('m' => Zend_Registry::get('dbPrefix').'menu'), array('m.menu_title'))
+								->where('m.menu_id = ?', $assign_menu[0]['menu_id'])
+								->limit(1);
+		$menuTitle =  $selectMenuTitle->query()->fetchAll();
+		echo $this->_view->headScript()->setFile('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/vendor/scripts/js/jquery.nivo.slider.pack.js');
+		echo $this->_view->headLink()->setStylesheet('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/css/futurico-theme.css');
+		echo $this->_view->headLink()->setStylesheet('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/css/nivo-slider.css');
+		
+?>
+
+<script>
+$(window).load(function() {
+	$('#slider').nivoSlider({
+		effect: 'sliceDownLeft',
+		directionNavHide: false,
+		pauseOnHover: true,
+		captionOpacity: 1,
+		prevText: '',
+		nextText: ''
+	});
+});
+</script>
+	
+<div class="block block-featured-gallery">
+    <div class="block-body">
+    	<h2><?php echo $translator->translator('block_featured_gallery_title','','', $this->_front_template['theme_folder']); ?></h2>
+        <div class="slider-wrapper futurico-theme">
+			<?php	
+                $global_conf = Zend_Registry::get('global_conf');
+                $currency = new Zend_Currency($global_conf['default_locale']);
+                if($gCatInfo)
+                {	
+                    $image_slide = '';	
+                    $caption_slide = '';				
+                    foreach($gCatInfo as $partial_key => $partial_entry)
+                    {									
+                        $link = $this->_view->url( array('module' => 'Gallery','controller' =>'frontend','action' => 'productdetails','menu_id' =>  $this->_view->escape($menuTitle[0]['menu_title']),'product_title' => $this->_view->escape($partial_entry['product_title']) ), 'Details/:menu_id/:product_title',    false);
+                        
+                        if($this->_view->escape($partial_entry['product_thumb_primary']))
+                        { 
+                            $thumb_image = 'data/frontImages/gallery/product_thumb/'.$this->_view->escape($partial_entry['product_thumb_primary']); 
+                        }
+                        else
+                        { 										
+                            if($this->_view->escape($partial_entry['product_thumb']))
+                            {
+                                $product_thumb_val_arr = explode(',',$partial_entry['product_thumb']);
+                                $thumb_image = 'data/frontImages/gallery/product_thumb/'.$this->_view->escape($product_thumb_val_arr[0]); 
+                                
+                            }
+                            else
+                            {
+                                
+                                if($this->_view->escape($partial_entry['product_file_primary']))
+                                {
+                                    $thumb_image = 'data/frontImages/gallery/product_image/'.$this->_view->escape($partial_entry['product_file_primary']); 
+                                }
+                                else
+                                {
+                                    $product_file_val_arr = explode(',',$partial_entry['product_file']);
+                                    $thumb_image = 'data/frontImages/gallery/product_image/'.$this->_view->escape($product_file_val_arr[0]); 
+                                }
+                            }		
+                        }
+                        //$img_title_desc = '<b>'.$translator->translator('auto_featured_common_name','','', $this->_front_template['theme_folder']).'</b> '.$this->_view->escape($partial_entry['product_name']);	
+                        //$img_title_desc .=	($this->_view->escape($partial_entry['product_code'])) ? '<br /><b>'.$translator->translator('auto_featured_common_code', '', '', $this->_front_template['theme_folder']).'</b> '.$this->_view->escape($partial_entry['product_code']) : '';
+                        //$img_title_desc .=	($this->_view->escape($partial_entry['product_price'])) ? '<br /><b>'.$translator->translator('auto_featured_common_price','','', $this->_front_template['theme_folder']).'</b> '.$this->_view->escape($partial_entry['product_price']).'&nbsp;'.$currency->getSymbol() : '';
+                        $image_slide .=  '<img src="'.$thumb_image.'" alt="" title="'.$this->_view->escape($partial_entry['product_name']).'">';
+                        $caption_slide .= '<div id="caption'.$partial_key.'" class="nivo-html-caption">'.$this->_view->escape($partial_entry['product_name']).'</div>';
+                    }	
+                }
+            ?>                            
+	
+            <div id="slider" class="nivoSlider">
+                <?php echo $image_slide; ?>
+            </div>
+
+        	<?php echo $caption_slide; ?>
+		</div>
+	</div>
+</div>
+
+<?php
+	}
+}
+try
+{
+	$featured_autos_gallery_class = new featured_autos_gallery($this);
+	$featured_autos_gallery_class->class_body();
+}
+catch(Exception $e)
+{
+	echo $e->getMessage();
+}
+?>

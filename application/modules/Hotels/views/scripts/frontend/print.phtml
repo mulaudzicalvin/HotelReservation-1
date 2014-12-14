@@ -1,0 +1,1618 @@
+<?php  echo $this->doctype('XHTML1_TRANSITIONAL'); $front_template = Zend_Registry::get('front_template'); $is_frontend = new Eicra_Model_DbTable_Frontend();  ?> 
+<html>
+<head>
+	<meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <base href="<?php echo $this->serverUrl().$this->baseUrl(); ?>/" />
+<?php
+$maximum_stars_digit = 6;
+$version = new Eicra_License_Version();  
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/jui-'.$version->getJQueryVersion().'/'.Zend_Registry::get('jtheme').'/jquery-'.$version->getJQueryVersion().'.min.js');
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/jui-'.$version->getJQueryVersion().'/'.Zend_Registry::get('jtheme').'/jquery-ui-'.$version->getJQueryUIVersion().'.custom.min.js');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/js/jquery/jui-'.$version->getJQueryVersion().'/'.Zend_Registry::get('jtheme').'/jquery-ui-'.$version->getJQueryUIVersion().'.custom.css');
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/BookingCalendar/js/jquery.dop.BookingCalendar.js');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/js/jquery/BookingCalendar/css/jquery.dop.BookingCalendar.css');
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/preview/preview.js');
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/gallery/jquery.ad-gallery.js'); 
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/raty/js/jquery.raty.js');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/style_sheet.css');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/hotels.css'); 
+echo $this->headLink()->setStylesheet($this->baseUrl().'/js/jquery/gallery/jquery.ad-gallery.css');
+
+
+if(!empty($this->view_datas['meta_keywords'])){ $this->headMeta()->setName('keywords',$this->view_datas['meta_keywords']); }
+if(!empty($this->view_datas['meta_desc'])) { $this->headMeta()->setName('description',$this->view_datas['meta_desc']); }
+if(!empty($this->view_datas['hotels_name'])) { $this->headTitle()->headTitle($this->escape($this->view_datas['hotels_name']),'SET')->setSeparator(' - ')->headTitle($this->view_datas['meta_title']); }
+
+function isnot_int($hotels_agent)
+{
+	$r = true;			
+	if(is_numeric($hotels_agent))
+	{ 
+		if(is_int((int)$hotels_agent))
+		{
+			$r = false;
+		}				
+	}
+	return $r;
+}
+
+
+$business_type_db = new Hotels_Model_DbTable_BusinessType();
+$mem_db = new Members_Model_DbTable_MemberList();
+$room_type_id_arr = explode(',', $this->hotelsForm->room_type_id->getValue());
+
+$nextHotels = $this->hotels_db->getNextHotels($this->view_datas['id'],$this->view_datas['group_id'], null);
+$prevHotels = $this->hotels_db->getPrevHotels($this->view_datas['id'],$this->view_datas['group_id'], null);
+$auth = Zend_Auth::getInstance ();
+$hasIdentity = $auth->hasIdentity ();
+
+
+
+if($this->view_datas['area_id'])
+{												
+	try
+	{
+		$area_db = new Hotels_Model_DbTable_Area();
+		$area_info = $area_db->getAreaInfo($this->view_datas['area_id']);		
+	}
+	catch(Exception $e)
+	{
+		
+	}
+}
+if($this->view_datas['state_id'])
+{
+	try
+	{
+		$state_db = new Hotels_Model_DbTable_State();
+		$state_info = $state_db->getStateInfo($this->view_datas['state_id']);
+	}
+	catch(Exception $e)
+	{
+		
+	}
+}
+if($this->view_datas['country_id'])
+{
+	try
+	{
+		$country_db = new Hotels_Model_DbTable_Country();
+		$country_info = $country_db->getCountryName($this->view_datas['country_id']);
+	}
+	catch(Exception $e)
+	{
+	}
+} 
+?>
+<style type="text/css">
+div.dialog_calendar{
+		width: 850px;
+		height: 400px;
+		background-color: #f0f0f0;
+		background: url('js/jquery/BookingCalendar/images/loader-big.gif') no-repeat center center;
+	}
+ #gallery {
+				padding: 10px 5px 5px 5px;
+				background: #F3F3F3;
+			  }
+			  .ad-gallery .ad-image-wrapper {
+					
+					height: 300px;
+				  }
+				.ad-gallery .ad-thumbs .ad-thumb-list {
+					padding-left:2px;
+										
+				  }
+			  #descriptions {
+				position: relative;
+				height: 50px;
+				background: #EEE;
+				margin-top: 10px;
+				width: 400px;
+				padding: 0px;
+				overflow: hidden;
+			  }
+				#descriptions .ad-image-description {
+				  position: absolute;
+				}
+				  #descriptions .ad-image-description .ad-description-title {
+					display: block;
+				  }
+		div.review-box
+		{
+			width:600px;			
+			overflow:hidden;
+			border:1px solid #000000;
+		}
+			div.review-box-image
+			{
+				float:left;
+				width:200px;
+			}
+			div.review-box-text
+			{
+				float:left;
+			}
+				div.review-box-title
+				{
+					padding-top:25px;
+					padding-bottom:25px;					
+				}
+				
+				div.review-box-desc
+				{
+										
+				}
+				
+				div.review-box-rate
+				{
+				
+				}
+					div.review-box-rate-text
+					{
+						float:left;
+						padding-right:10px;
+					}
+					div.review-box-rate-star
+					{
+						overflow:hidden;
+						float:left;
+					}
+</style>
+<script type="text/javascript">
+ $(function() {				
+	var galleries = $('.ad-gallery').adGallery();
+	$('#switch-effect').change(
+	  function() {
+		galleries[0].settings.effect = $(this).val();
+		return false;
+	  }
+	);
+	$('#toggle-slideshow').click(
+	  function() {
+		galleries[0].slideshow.toggle();
+		return false;
+	  }
+	);
+	$('#toggle-description').click(
+	  function() {
+		if(!galleries[0].settings.description_wrapper) {
+		  galleries[0].settings.description_wrapper = $('#descriptions');
+		} else {
+		  galleries[0].settings.description_wrapper = false;
+		}
+		return false;
+	  }
+	);
+  });
+
+
+$(document).ready(function() {
+	function stripslashes(str) 
+	{
+		str=str.replace(/\\'/g,'\'');
+		str=str.replace(/\\"/g,'"');
+		str=str.replace(/\\0/g,'\0');
+		str=str.replace(/\\\\/g,'\\');
+		return str;
+	}
+	
+	$('a.toggle_desc').click(function() {
+		var self = this;
+		var id = $(self).attr('rel');
+		
+		$('#room_type_desc'+id).slideToggle(500,function () {
+			
+		});
+		return false;
+	  });
+	  
+	 $('a.book_btn').click(function() {
+	 	
+		var tmp  = false;
+		$.each($('#bookHotel').serializeArray(), function(i, field) {	
+			if(field.name == 'apartments_no[]')
+			{
+				if(field.value != '0' && field.value != '')
+				{
+					tmp = true;
+				}
+			}
+		});
+		if(tmp == true)
+		{
+			$('#bookHotel').submit();
+		}
+		else
+		{
+			var msg = "<?php echo $this->translator->translator('hotels_selected_err'); ?>";
+			openMsgDialog(msg);
+		}
+	 });
+	
+	function openMsgDialog(msg)
+	{
+		$('#dialog_container').html(msg).dialog({
+					autoOpen: true,
+					modal: false,
+					show: 'fade',
+					resizable: 'false',				
+					buttons: { "Ok": function() { $(this).dialog('option', 'hide', 'explode').dialog("close"); } },
+					open: function(event, ui)
+						 {
+							setTimeout(function() 
+							{									
+								if($('#' + event.target.id).dialog('isOpen'))
+								{
+									$('#' + event.target.id).dialog('option', 'hide', 'explode').dialog('close');										
+								}
+							}, 10000);
+						  }
+				});
+	}
+	
+	$('a.save_hotels_btn').click(function() {
+		var self = this;
+		var id = $(self).attr('rel');
+		$.ajax({
+			  url: "<?php echo $this->url( array('module' =>'Hotels','controller' => 'frontend', 'action'     => 'save' ), 'adminrout',    true) ?>",
+			  type: 'POST',
+			  data: { id: id },
+			  beforeSend: function(){						
+						$(self).html('<img src="images/ajax_loader7.gif" border="0" width="20" height="20" />');	
+					 },
+			  success: function(response){
+				//alert(response);
+				var json_arr = eval("("+response+")");							
+				if(json_arr.status == 'ok')
+				{
+					openMsgDialog(json_arr.msg);
+				}
+				else
+				{
+					openMsgDialog(json_arr.msg);
+				}
+				$(self).html('<?php echo $this->translator->translator("hotels_front_page_save_hotels"); ?>');
+			  }
+		});
+	});	
+	
+});
+function raty (id, start_point)
+{
+	$('#'+id+'_star').raty({
+	  path: 'js/jquery/raty/img/',						  
+	  hintList:		<?php echo $this->translator->translator('common_rating_hintList'); ?>,
+	  number:     <?php $hint_arr = explode(', ',str_replace('[', '', str_replace(']', '', $this->translator->translator('common_rating_hintList')))); echo count($hint_arr); ?>,
+	  start: start_point,
+	  readOnly:   true					 
+	});
+}
+</script>
+</head>
+<body onLoad="javascript:print();">
+<div id="main-container"> 
+    <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">
+    <tr>
+    <td height="45" align="center" valign="bottom"><span  class="hotel-btn"><a href="javascript:print();"  ><?php echo $this->translator->translator('common_print'); ?></a></span>
+    </td>
+    </tr>
+    <tr>
+    <td style="border:1px solid #CCC;"><table width="99%" border="0" align="center" cellpadding="0" cellspacing="0">
+    
+    <tr>
+    <td>&nbsp;</td>
+    <td>&nbsp;</td>
+    </tr>
+    <tr>
+    <td width="50%" valign="top">
+    <?php		  
+    $hotels_image_val_arr = explode(',', $this->hotelsForm->hotels_image->getValue());
+    if($this->escape($this->view_datas['hotels_primary_image']))
+    { 
+        $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($this->view_datas['hotels_primary_image']); 
+    }
+    else
+    { 
+        if($this->escape($this->hotelsForm->hotels_image->getValue()))
+        {					
+            $thumb_image = 'data/frontImages/hotels/hotels_image/'.$this->escape($hotels_image_val_arr[0]); 
+        }
+        else
+        {
+            $thumb_image = 'data/frontImages/hotels/design_images/no_image.jpg'; 
+        }		
+    }
+    if($this->group_datas['img_big_width'] && ($this->group_datas['img_big_resize_func'] == 'resizeToWidth' || $this->group_datas['img_big_resize_func'] == 'resize' ))
+    { 
+        $width = 'width="'.$this->escape($this->group_datas['img_big_width']).'"'; 
+    }
+    else
+    {
+        $width = '';
+    } 
+    if($this->group_datas['img_big_height'] && ( $this->group_datas['img_big_resize_func'] == 'resizeToHeight' || $this->group_datas['img_big_resize_func'] == 'resize' ))
+    { 
+        $height = 'height="'.$this->escape($this->group_datas['img_big_height']).'"'; 
+    } 
+    else
+    {
+        $height = '';
+    }
+    
+    ?>        
+    
+    
+    
+    </td>
+    <td width="50%" valign="top">						  
+    </td>
+    </tr>
+    <tr>
+    <td colspan="2" style="padding-top:8px;">
+    <table width="100%" border="0" align="left" cellpadding="0" cellspacing="0" bgcolor="#F9F9F9" style="border:1px solid #CCCCCC;">
+    <tr>
+      <td height="40" align="left" class="topbar_1 hotel-title-2" style="border-bottom:1px solid #E2E2E2;padding-left:15px;"><span class="hotel-title-3"><?php echo $this->escape($this->hotelsForm->hotels_name->getValue()); ?></span></td>
+    </tr>
+    <tr>
+      <td style="padding:5px;"><table width="100%" border="0" align="center" cellpadding="4" cellspacing="0" class="hotel-big-desc">
+         
+          <tr>
+            <td ><?php echo $this->escape($this->hotelsForm->hotels_desc->getValue()); ?></td>
+          </tr>
+      </table></td>
+    </tr>
+    </table>
+    </td>
+    </tr>
+    <tr>
+    <td>&nbsp;</td>
+    </tr>
+    </table></td>
+    </tr>
+    
+    <tr>
+    <td>&nbsp;</td>
+    </tr>
+    
+    
+    <tr>
+    <td><table width="100%" border="0" align="center" cellpadding="0" cellspacing="0">      
+    <tr>
+    <td>
+    <div id="tabs">
+    
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-2">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="hotel-title-2"><?php echo $this->translator->translator('hotels_front_page_Title_images'); ?></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td>
+                <table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <?php
+                            if($this->group_datas['file_thumb_width'] && ($this->group_datas['file_thumb_resize_func'] != 'resizeToHeight' || $this->group_datas['file_thumb_resize_func'] != 'resize' ))
+                            { 
+                                $width_img = 'width="'.$this->escape($this->group_datas['file_thumb_width']).'"'; 
+                            }
+                            else
+                            {
+                                $width_img = '';
+                            } 
+                            if($this->group_datas['file_thumb_height'] && ( $this->group_datas['file_thumb_resize_func'] != 'resizeToWidth' || $this->group_datas['file_thumb_resize_func'] != 'resize' ))
+                            { 
+                                $height_img = 'height="'.$this->escape($this->group_datas['file_thumb_height']).'"'; 
+                            } 
+                            else
+                            {
+                                $height_img = '';
+                            }
+                            $img_arr = explode(',',$this->hotelsForm->hotels_image->getValue());
+                            $i = 1;
+                            foreach($img_arr as $key => $value)
+                            {
+                        ?>
+                        <td style="padding:1px;">
+                            <a href="javascript:void(0);" class="change_img preview" link="data/frontImages/hotels/hotels_image/<?php echo $value; ?>" <?php echo $width; ?> <?php echo $height; ?> title="<?php echo $this->escape($this->hotelsForm->hotels_name->getValue()); ?>"><img src="data/frontImages/hotels/hotels_image/<?php echo $value; ?>" <?php echo $width_img.' '.$height_img; ?> border="0" style="border:1px solid #CCCCCC; padding:4px;"/></a>
+                        </td>
+                        <?php
+                                if($i % $this->group_datas['file_col_num'] == 0){ echo '</tr><tr>'; }
+                                $i++;
+                            }
+                        ?>
+                    </tr>
+                </table>
+              </td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </div>
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-1">
+          <table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#333333;">
+            <tr>
+              <td width="56%" valign="top">
+             
+              <div class="hotel-details-info">
+                                            <div class="hotel-feature-col-1">
+                                                <?php echo $this->translator->translator('hotels_front_page_list_head_room_type'); ?>
+                                            </div>
+                                            <div class="hotel-feature-col-2">
+                                                <?php echo $this->translator->translator('hotels_front_page_list_head_people_per_room'); ?>
+                                            </div>
+                                            <div class="hotel-feature-col-3">
+                                                <?php echo $this->translator->translator('hotels_front_page_list_head_price_per_room'); ?>
+                                            </div>	
+                                            <div class="hotel-feature-col-4">
+                                                <?php echo $this->translator->translator('hotels_front_page_list_head_no_apartments'); ?>
+                                            </div>												
+                                                                                        
+                                        <?php	
+                                            $room_type_name_arr = array();										
+                                            foreach($room_type_id_arr as $key=>$value)
+                                            {
+                                                $room_type_info = $this->room_type_db->getRoomTypeInfo($value);
+                                                $room_type_name_arr[$key] = $this->escape($room_type_info['room_type']);
+                                                if($room_type_info['room_left'] > 0)
+                                                {
+                                                    $row_class = ($key % 2 == 0) ? '2' : '3';															
+                                        ?>
+                                                <div class="hotel-feature-col1-row<?php echo $row_class; ?>">
+                                                        <span ><a href="javascript: void(0);" class="toggle_desc preview" rel="<?php echo $this->escape($room_type_info['id']); ?>" link=""  title="<?php echo $this->escape($room_type_info['room_condition']); ?>"><?php echo $this->escape($room_type_info['room_type']); ?></a></span>
+                                                </div>
+                                                <div class="hotel-feature-col2-row<?php echo $row_class; ?>">																
+                                                        <a href="javascript:void(0);" class="preview" link="" title="<?php echo $this->translator->translator('hotels_front_page_list_title_people',$this->escape($room_type_info['max_people'])); ?>">
+                                                        <?php 
+                                                            if($this->escape($room_type_info['max_people']) <= 4)
+                                                            {
+                                                                for($i = 1; $i <= $this->escape($room_type_info['max_people']); $i++)
+                                                                {
+                                                                    echo '<img src="data/frontImages/hotels/design_images/people.png" border="0" />';
+                                                                }
+                                                            } 
+                                                            else
+                                                            {
+                                                                for($i = 1; $i <= 3; $i++)
+                                                                {
+                                                                    echo '<img src="data/frontImages/hotels/design_images/people.png" border="0" />';
+                                                                }
+                                                                echo '<span class="person-count">'.$this->escape($room_type_info['max_people']).'</span>';
+                                                            }
+                                                        ?>
+                                                        </a>
+                                                </div>
+                                                <div class="hotel-feature-col3-row<?php echo $row_class; ?>">
+                                                        <span class="hotel-original-price"><?php echo $this->currency->getShortName().'&nbsp;'.$this->escape($room_type_info['basic_price']); ?></span>
+                                                        <span class="hotel-special-price"><?php echo $this->currency->getShortName().'&nbsp;'.$this->escape($room_type_info['descount_price']); ?></span>
+                                                </div>
+                                                <div class="hotel-feature-col4-row<?php echo $row_class; ?>">
+                                                        <select name="apartments_no[]" id="apartments_no" class="apartments_no" style="border:1px solid #09C;">
+                                                            <option value="0">0</option>
+                                                            <?php
+                                                                for($i= 1; $i <= $this->escape($room_type_info['room_left']); $i++ )
+                                                                {
+                                                                    $price_sum = $this->escape($room_type_info['descount_price']) * $i;
+                                                                    echo '<option value="'.$i.'">'.$i.' ('.$this->currency->getShortName().'&nbsp;'.$price_sum.') '.$this->translator->translator('hotels_front_page_list_head_no_apartments_per_night').'</option>';
+                                                                }
+                                                            ?>
+                                                        </select><input type="hidden" name="room_type_id[]" id="room_type_id" value="<?php echo $this->escape($room_type_info['id']); ?>" /><input type="hidden" name="hotel_id[]" id="hotel_id" value="<?php echo $this->escape($this->view_datas['id']); ?>" /><br />
+                                                        <?php 
+                                                            if($this->escape($room_type_info['room_left']) == $this->escape($room_type_info['total_room_no']))
+                                                            {
+                                                                echo $this->translator->translator('hotels_front_page_list_available_type_yes');
+                                                            }
+                                                            else if($this->escape($room_type_info['room_left']) == '0')
+                                                            {
+                                                                echo $this->translator->translator('hotels_front_page_list_available_type_no');
+                                                            }
+                                                            else if($this->escape($room_type_info['room_left']) == '1')
+                                                            {
+                                                                echo '<a href="javascript:void(0);" class="preview" link="" title="'.$this->translator->translator('hotels_front_page_list_available_type_last_desc', $this->currency->getShortName().'&nbsp;'.$this->escape($room_type_info['descount_price'])).'">'.$this->translator->translator('hotels_front_page_list_available_type_llast', $this->escape($room_type_info['room_left'])).'</a>';
+                                                            }
+                                                            else if($this->escape($room_type_info['room_left']) > '1' && $this->escape($room_type_info['room_left']) <= $this->escape($room_type_info['total_room_no']))
+                                                            {
+                                                                echo $this->translator->translator('hotels_front_page_list_available_type_left', $this->escape($room_type_info['room_left']));
+                                                            }
+                                                         ?>
+                                                </div>
+                                                <div id="room_type_desc<?php echo $room_type_info['id']; ?>" style="width:560px;float:left;display:inline;" class="hotel-big-desc">
+                                                    <?php
+                                                        if(!empty($room_type_info['room_type_image']))
+                                                        {
+                                                            $room_type_im_arr = explode(',', $room_type_info['room_type_image']);
+                                                            foreach($room_type_im_arr as $key=>$value)
+                                                            {
+                                                    ?>
+                                                                <a href="javascript:void(0)" link="data/frontImages/hotels/room_type_image/<?php echo $value; ?>" class="change_img preview" title="<?php echo $this->escape($room_type_info['room_type']); ?>" <?php echo $width; ?> <?php echo $height; ?> ><img src="data/frontImages/hotels/room_type_image/<?php echo $value; ?>" width="90" style="border:1px solid #08BAFF; padding:4px;"/></a> &nbsp;
+                                                    <?php
+                                                            }
+                                                        }
+                                                        echo '<br/>'.nl2br($this->escape($room_type_info['room_desc']));
+                                                    ?>
+                                                </div>
+                                                
+                                        <?php
+                                                }
+                                            }
+                                        ?>																						
+                                </div>
+                                <div>&nbsp;</div>
+                                
+             
+              </td>
+              <td width="44%" valign="top"><table width="99%" border="0" align="center" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td><table width="98%" border="0" align="right" cellpadding="0" cellspacing="0" bgcolor="#F9F9F9" style="border:1px solid #CCCCCC;">
+                    <tr>
+                      <td height="40" align="center" class="topbar_1 hotel-title-2" style="border-bottom:1px solid #E2E2E2;"><?php echo $this->translator->translator('hotels_front_page_Title_summary'); ?></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:5px;"><table width="99%" border="0" align="center" cellpadding="3" cellspacing="0">
+                        <?php
+                        if($this->escape($this->hotelsForm->category_id->getValue()))
+                        {
+                        ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php   echo $this->hotelsForm->category_id->getAttrib('font_end_label'); ?></td>
+                          </tr>
+                        <tr>
+                          <td class="hotel-summary-value"><?php							  
+                            
+                                $cat_db =  new Hotels_Model_DbTable_Category();
+                                $cat_info = $cat_db->getCategoryInfo($this->escape($this->hotelsForm->category_id->getValue()));
+                                echo $this->escape($cat_info['category_name']);
+                            
+                          ?></td>
+                          </tr>
+                         <?php
+                         }
+                         if($this->hotelsForm->feature_pet->getValue())
+                         {
+                         ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php  echo $this->hotelsForm->feature_pet->getAttrib('font_end_label'); ?></td>
+                         </tr>								  
+                        <tr>
+                          <td class="hotel-summary-value"><?php echo $this->escape($this->hotelsForm->feature_pet->getValue()); ?></td>
+                        </tr>
+                        <?php
+                          }
+                          if($this->view_datas['checkin_date'] != '00:00:00')
+                         {
+                         ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php  echo $this->hotelsForm->checkin_hour->getAttrib('font_end_label'); ?></td>
+                          </tr>
+                        <tr>
+                          <td class="hotel-summary-value"><?php echo $this->escape($this->view_datas['checkin_date']); ?></td>
+                          </tr>
+                         <?php
+                          }
+                          if($this->view_datas['checkout_date'] != '00:00:00')
+                         {
+                         ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php echo $this->hotelsForm->checkout_hour->getAttrib('font_end_label'); ?></td>
+                          </tr>
+                        <tr>
+                          <td class="hotel-summary-value"><?php echo $this->escape($this->view_datas['checkout_date']); ?></td>
+                          </tr>
+                          <?php
+                         }
+                         if($this->hotelsForm->feature_distance_from_airport->getValue() || $this->hotelsForm->feature_distance_from_city_market->getValue())
+                         {
+                         ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php echo $this->hotelsForm->feature_distance_from_airport->getAttrib('font_end_label');  ?></td>
+                          </tr>
+                        <tr>
+                          <td class="hotel-summary-value"><?php echo $this->escape($this->hotelsForm->feature_distance_from_airport->getValue()).' '.$this->translator->translator('hotels_front_page_label_distance_km').'<br />'.$this->escape($this->hotelsForm->feature_distance_from_airport->getValue()).' '.$this->translator->translator('hotels_front_page_label_distance_km_city_market'); ?></td>
+                          </tr>
+                         <?php
+                         }
+                         if($this->hotelsForm->hotels_about_internet->getValue())
+                         {
+                         ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php echo $this->hotelsForm->hotels_about_internet->getAttrib('font_end_label');  ?></td>
+                          </tr>
+                        <tr>
+                          <td class="hotel-summary-value"><?php echo $this->escape($this->hotelsForm->hotels_about_internet->getValue()); ?></td>
+                          </tr>
+                         <?php
+                         }
+                         if($this->hotelsForm->hotels_about_parking->getValue())
+                         {
+                         ?>
+                        <tr>
+                          <td class="hotel-summary-label"><?php echo $this->hotelsForm->hotels_about_parking->getAttrib('font_end_label');  ?></td>
+                          </tr>
+                        <tr>
+                          <td class="hotel-summary-value"><?php echo $this->escape($this->hotelsForm->hotels_about_parking->getValue()); ?></td>
+                          </tr>
+                         <?php
+                         }
+                         ?>
+                        </table> 
+                      
+                      </td>
+                    </tr>
+                    
+                  </table></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <?php
+                    //Checking Membership Package Option
+                    $packages = new Members_Controller_Helper_Packages();
+                    $general_db = new Members_Model_DbTable_General();
+                    $forms_db = new Members_Model_DbTable_Forms();
+                    $mem_info = $mem_db->getMemberInfo($this->view_datas['entry_by']);	
+                    $module = $this->module;
+                    $controller = $this->controller;
+                    $action = $this->action;
+                    if($packages->checkFormAvailable('Default Info'))
+                    {
+                        $default_form_id  = $forms_db->getFormId('Default Info');
+                        $default_form_info['form_id'] = 	$default_form_id[0]['id'];
+                        $default_general_info = $general_db->getAllValues($default_form_id[0]['id']);												
+                        $dynamic_valu_db = new Members_Model_DbTable_FieldsValue();	
+                        $default_form_info	=	$dynamic_valu_db->getFieldsValueInfo($default_form_info,$default_general_info[0]['id']);
+                        
+                    }
+                    else
+                    {
+                        $default_form_info = null;
+                    }
+                    if($packages->isPackageFrontend($mem_info['user_id'],$mem_info['role_id']))
+                    {								
+                        if($packages->isPackageFrontendField($module,$controller,$action,$mem_info['user_id'],$mem_info['role_id']))
+                        {
+                            $package_no = $packages->getPackageFrontendFieldValue($module,$controller,$action,$mem_info['user_id'],$mem_info['role_id']);				
+                        }
+                        else
+                        {
+                            $package_no = 'Off';
+                        }
+                    }
+                    else
+                    {
+                        $package_no = 'On';
+                    }
+                    
+                if($package_no == 'On')
+                {	
+                    
+                ?>
+                <tr>
+                  <td><table width="98%" border="0" align="right" cellpadding="0" cellspacing="0" bgcolor="#F9F9F9" style="border:1px solid #CCCCCC;">
+                    <tr>
+                      <td height="40" align="center" class="topbar_1 hotel-title-2" style="border-bottom:1px solid #E2E2E2;"><?php echo $this->translator->translator('hotels_front_page_Title_realtor'); ?></td>
+                    </tr>
+                    <tr>
+                      <td style="padding:5px;"><table width="100%" border="0" align="center" cellpadding="3" cellspacing="0">
+                          <tr>
+                            <td colspan="2"><span class="hotel-title-4"><?php echo $this->translator->translator('hotels_front_page_label_presented'); ?></span><br />
+                            <?php
+                            if($this->escape($this->view_datas['hotels_agent']))
+                            {
+                                $mem_db = new Members_Model_DbTable_MemberList();
+                                $owner_info = (isnot_int($this->view_datas['hotels_agent'])) ? $this->escape($this->view_datas['hotels_agent']) : $mem_db->getMemberInfo($this->escape($this->view_datas['hotels_agent']));
+                                $owner_name = (is_array($owner_info)) ? $owner_info['title'].' '.$owner_info['firstName'].' '.$owner_info['lastName'] : $owner_info;	
+                                echo $this->escape($owner_name);
+                                $mem_user_id = (is_array($owner_info)) ? $owner_info['user_id'] : $mem_info['user_id'];
+                                $mem_role_id = (is_array($owner_info)) ? $owner_info['role_id'] : $mem_info['role_id'];
+                                if(is_array($owner_info))
+                                {
+                                    $role_db = new Members_Model_DbTable_Role();
+                                    $role_info = $role_db->getRoleInfo($owner_info['role_id']);
+                                    $owner_info['form_id'] = 	$role_info['form_id'];
+                                    $dynamic_valu_db = new Members_Model_DbTable_FieldsValue();	
+                                    $owner_info	=	$dynamic_valu_db->getFieldsValueInfo($owner_info,$owner_info['user_id']);
+                                    foreach($owner_info as $key=>$value)
+                                    {
+                                        $field_name_arr = explode('_',$key);
+                                        if(in_array('package',$field_name_arr))
+                                        {
+                                            $package_info = $packages->getFormAllDatas($value);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    $mem_user_id = $mem_info['user_id'];
+                                    $mem_role_id = $mem_info['role_id'];
+                                    $role_db = new Members_Model_DbTable_Role();
+                                    $role_info = $role_db->getRoleInfo($mem_role_id);
+                                    $mem_info['form_id'] = 	$role_info['form_id'];
+                                    $dynamic_valu_db = new Members_Model_DbTable_FieldsValue();	
+                                    $mem_info	=	$dynamic_valu_db->getFieldsValueInfo($mem_info,$mem_user_id);
+                                    foreach($mem_info as $key=>$value)
+                                    {
+                                        $field_name_arr = explode('_',$key);
+                                        if(in_array('package',$field_name_arr))
+                                        {
+                                            $package_info = $packages->getFormAllDatas($value);
+                                        }
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                $mem_user_id = $mem_info['user_id'];
+                                $mem_role_id = $mem_info['role_id'];
+                                $role_db = new Members_Model_DbTable_Role();
+                                $role_info = $role_db->getRoleInfo($mem_role_id);
+                                $mem_info['form_id'] = 	$role_info['form_id'];
+                                $dynamic_valu_db = new Members_Model_DbTable_FieldsValue();	
+                                $mem_info	=	$dynamic_valu_db->getFieldsValueInfo($mem_info,$mem_user_id);
+                                foreach($mem_info as $key=>$value)
+                                {
+                                    $field_name_arr = explode('_',$key);
+                                    if(in_array('package',$field_name_arr))
+                                    {
+                                        $package_info = $packages->getFormAllDatas($value);
+                                    }
+                                }
+                            }
+                            ?>
+                            
+                            </td>
+                            </tr>
+                          <tr>
+                            <td>
+                            <?php
+                                if(is_array($owner_info))
+                                {
+                                    if($owner_info['member_photo'])
+                                    {
+                                        $owner_forms_info = $forms_db->getFormsInfo($role_info['form_id']);
+                                        if($owner_info['member_photo'])
+                                        {
+                                            $member_photo_path = $owner_forms_info['attach_file_path'];
+                                            $member_photo = $member_photo_path.'/'.$owner_info['member_photo'];
+                                            $member_photo_width = 'width="'.$default_form_info['member_photo_width_default'].'"';
+                                            $member_photo_height = 'height="'.$default_form_info['member_photo_height_default'].'"';
+                                        }
+                                        else
+                                        {
+                                            if(!empty($default_form_info))
+                                            {
+                                                    $member_photo = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['member_photo_default'];
+                                                    $member_photo_width = 'width="'.$default_form_info['member_photo_width_default'].'"';
+                                                    $member_photo_height = 'height="'.$default_form_info['member_photo_height_default'].'"';
+                                            }
+                                            else
+                                            {
+                                                    $member_photo = 'data/frontImages/hotels/design_images/no_user_image.gif';
+                                                    $member_photo_width = 'width="75"';
+                                                    $member_photo_height = 'height="87"';
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {												
+                                            if(!empty($default_form_info))
+                                            {
+                                                    $member_photo = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['member_photo_default'];
+                                                    $member_photo_width = 'width="'.$default_form_info['member_photo_width_default'].'"';
+                                                    $member_photo_height = 'height="'.$default_form_info['member_photo_height_default'].'"';
+                                            }
+                                            else
+                                            {
+                                                    $member_photo = 'data/frontImages/hotels/design_images/no_user_image.gif';
+                                                    $member_photo_width = 'width="75"';
+                                                    $member_photo_height = 'height="87"';
+                                            }
+                                    }
+                                }
+                                else
+                                {
+                                    if(!empty($default_form_info))
+                                    {
+                                            $member_photo = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['member_photo_default'];
+                                            $member_photo_width = 'width="'.$default_form_info['member_photo_width_default'].'"';
+                                            $member_photo_height = 'height="'.$default_form_info['member_photo_height_default'].'"';
+                                    }
+                                    else
+                                    {
+                                            $member_photo = 'data/frontImages/hotels/design_images/no_user_image.gif';
+                                            $member_photo_width = 'width="75"';
+                                            $member_photo_height = 'height="87"';
+                                    }
+                                }
+                                                                        
+                            ?>
+                            <img src="<?php echo $member_photo; ?>" <?php echo $member_photo_width.' '.$member_photo_height; ?> style="border:1px solid #CCCCCC;"/>
+                            </td>
+                            <td valign="top">									
+                                <table width="100%" border="0" cellspacing="0" cellpadding="3">
+                                  <tr>
+                                    <td colspan="2" valign="top"><strong><?php echo $this->translator->translator('hotels_front_page_label_company'); ?></strong></td>
+                                    <td width="45%" valign="top" rowspan="3">
+                                    <?php																								
+                                        if($packages->isPackageFrontendField($module,$controller,$action.'_pic',$mem_user_id,$mem_role_id))
+                                        {													
+                                            $package_pic_info = $packages->getPackageFrontendFieldDetailsValue($module,$controller,$action.'_pic',$mem_user_id,$mem_role_id);				
+                                            
+                                            if(!empty($package_pic_info))
+                                            {
+                                                $forms_info = $forms_db->getFormsInfo($package_pic_info['form_id']);
+                                                if(!empty($package_pic_info['field_value']))
+                                                {
+                                                    $package_pic = $this->serverUrl().$this->baseUrl().'/'. $forms_info['attach_file_path'].'/'.$package_pic_info['field_value'];
+                                                    $package_pic_width = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_pic_width',$mem_user_id,$mem_role_id);
+                                                    $package_pic_height = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_pic_height',$mem_user_id,$mem_role_id);
+                                                    $package_pic_width_field = ($package_pic_width) ? 'width="'.$package_pic_width.'"' : '';
+                                                    $package_pic_height_field = ($package_pic_width) ? 'height="'.$package_pic_height.'"' : '';
+                                                }
+                                                else
+                                                {
+                                                    $package_pic = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['property_frontend_details_pic_default'];
+                                                    $package_pic_width_field = (!empty($default_form_info['property_frontend_details_pic_width_default'])) ? 'width="'.$default_form_info['property_frontend_details_pic_width_default'].'"' : '';
+                                                    $package_pic_height_field = (!empty($default_form_info['property_frontend_details_pic_height_default'])) ? 'height="'.$default_form_info['property_frontend_details_pic_height_default'].'"' : '';
+                                                }
+                                            }
+                                            else
+                                            {
+                                                $package_pic = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['property_frontend_details_pic_default'];
+                                                $package_pic_width_field = (!empty($default_form_info['property_frontend_details_pic_width_default'])) ? 'width="'.$default_form_info['property_frontend_details_pic_width_default'].'"' : '';
+                                                $package_pic_height_field = (!empty($default_form_info['property_frontend_details_pic_height_default'])) ? 'height="'.$default_form_info['property_frontend_details_pic_height_default'].'"' : '';
+                                            }
+                                        }
+                                        else
+                                        {
+                                            $package_pic = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['property_frontend_details_pic_default'];
+                                            $package_pic_width_field = (!empty($default_form_info['property_frontend_details_pic_width_default'])) ? 'width="'.$default_form_info['property_frontend_details_pic_width_default'].'"' : '';
+                                            $package_pic_height_field = (!empty($default_form_info['property_frontend_details_pic_height_default'])) ? 'height="'.$default_form_info['property_frontend_details_pic_height_default'].'"' : '';
+                                        }
+                                        
+                                        if($package_pic)
+                                        {
+                                    ?>
+                                    <img src="<?php echo $package_pic; ?>" <?php echo $package_pic_width_field.' '.$package_pic_height_field; ?> />
+                                    <?php
+                                        }
+                                    ?>											
+                                    </td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" valign="top"><?php if(is_array($owner_info)){ echo $this->escape($owner_info['companyName']); } ?></td>
+                                    
+                                  </tr>
+                                  <tr>
+                                    <td colspan="2" valign="top"><strong><?php if(($package_info[0]['field_value'])){ echo $this->translator->translator('common_package_name_title'); } ?></strong></td>
+                                  </tr>
+                                  <tr>
+                                    <td colspan="3" valign="top" class="box_link_URL"><?php echo $this->escape($package_info[0]['field_value']); ?></td>
+                                  </tr>
+                                </table>
+                            </td>
+                            </tr>
+                          <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                            </tr>
+                        <?php
+                            
+                            if($packages->isPackageFrontendField($module,$controller,$action.'_contact_directly',$mem_user_id,$mem_role_id))
+                            {
+                                $contact_directly = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_contact_directly',$mem_user_id,$mem_role_id);				
+                            }
+                            else
+                            {
+                                $contact_directly = 'No';
+                            }
+                            if($contact_directly == 'Yes')
+                            {
+                         ?>
+                          <tr>
+                            <td  valign="top"><?php echo $this->translator->translator('hotels_front_page_label_phone'); ?></td>
+                            <td width="70%" valign="top"><?php echo $this->escape($this->view_datas['showroom_phone']); ?></td>
+                          </tr>
+                          <tr>
+                            <td  valign="top"><?php echo $this->translator->translator('hotels_front_page_label_fax'); ?></td>
+                            <td valign="top"><?php echo $this->escape($this->view_datas['showroom_fax']); ?></td>
+                          </tr>
+                          <tr>
+                            <td width="30%" valign="top"><?php echo $this->translator->translator('hotels_front_page_label_email'); ?></td>
+                            <td>
+                                <table width="100%" border="0" cellpadding="0" cellspacing="0">
+                                 <tr>
+                                    <td width="16%" align="center" valign="top"><img src="data/frontImages/hotels/design_images/email_friend.gif" width="20" height="20" /></td>
+                                    <td valign="top" class="box_link"><a href="<?php if(is_array($owner_info)){ echo 'mailto:'.$this->escape($owner_info['username']); }else{ echo 'mailto:'.$this->escape($this->view_datas['house_email']) ;} ?>"><?php echo $this->translator->translator('hotels_front_page_label_email_lang'); ?></a></td>
+                                 </tr>
+                                </table>
+                            </td>
+                          </tr>
+                          <tr>
+                            <td  valign="top"><?php echo $this->translator->translator('hotels_front_page_label_web'); ?></td>
+                            <td  valign="top" class="box_link_URL"><a href="<?php if(is_array($owner_info)){ echo 'http://'.$this->escape($owner_info['website']); } ?>" target="_blank"><?php if(is_array($owner_info)){ echo $this->escape($owner_info['website']); } ?></a></td>
+                          </tr>
+                          <tr>
+                            <td><?php echo $this->translator->translator('hotels_front_page_label_contact'); ?></td>
+                            <td>
+                                <?php echo $this->translator->translator('hotels_front_page_label_house_no'); ?> <?php echo $this->escape($this->view_datas['house_no']); ?><br />
+                                <?php echo $this->translator->translator('hotels_front_page_label_city'); 
+                                    if($this->view_datas['area_id'])
+                                    {												
+                                        echo " ".$this->escape($area_info['city']);
+                                    }
+                                ?><br />
+                                <?php echo $this->translator->translator('hotels_front_page_label_state'); 
+                                    if($this->view_datas['state_id'])
+                                    {
+                                        echo " ".$this->escape($state_info['state_name']);
+                                    }
+                                ?><br />
+                                <?php echo $this->translator->translator('hotels_front_page_label_country'); 
+                                    if($this->view_datas['country_id'])
+                                    {
+                                        echo " ".$this->escape($country_info['value']);
+                                    }
+                                ?><br />
+                                <?php echo $this->translator->translator('hotels_front_page_label_postcode'); 
+                                    echo " ".$this->escape($this->view_datas['post_code']);	
+                                ?>								
+                            </td>
+                          </tr>
+                          <?php
+                            }
+                          ?>
+                          <tr>
+                            <td colspan="2" style="border-bottom:1px solid #CCCCCC;">&nbsp;</td>
+                            </tr>
+                            <tr>
+                                <td colspan="2">
+                                    <?php
+                                    if($packages->isPackageFrontendField($module,$controller,$action.'_certified',$mem_user_id,$mem_role_id))
+                                    {
+                                        $allow_certified = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_certified',$mem_user_id,$mem_role_id);				
+                                    }
+                                    else
+                                    {
+                                        $allow_certified = 'No';
+                                    }
+                                    if($packages->isPackageFrontendField($module,$controller,$action.'_allow_logo',$mem_user_id,$mem_role_id))
+                                    {
+                                        $allow_logo = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_allow_logo',$mem_user_id,$mem_role_id);				
+                                    }
+                                    else
+                                    {
+                                        $allow_logo = 'No';
+                                    }
+                                    ?>
+                                    <table width="100%" cellpadding="0" cellspacing="0">
+                                      <tr class="hotel-title-2">
+                                        <td height="30" ><?php if($allow_logo == 'Yes') { echo $this->translator->translator('hotels_front_page_label_company_logo'); } ?></td>
+                                        <td><?php if($allow_certified == 'Yes'){ echo $this->translator->translator('hotels_front_page_label_verified'); } ?></td>
+                                      </tr>
+                                      
+                                      <tr>
+                                        <td>
+                                        <?php
+                                            
+                                            if($allow_logo == 'Yes')
+                                            {									
+                                                if(is_array($owner_info))
+                                                {
+                                                    if($owner_info['company_logo'])
+                                                    {
+                                                        $company_logo_path = $owner_forms_info['attach_file_path'];
+                                                        $company_logo = $member_photo_path.'/'.$owner_info['company_logo'];
+                                                        $company_logo_width = ($default_form_info['company_logo_width_default']) ? 'width="'.$default_form_info['company_logo_width_default'].'"' : '';
+                                                        $company_logo_height = ($default_form_info['company_logo_height_default']) ? 'height="'.$default_form_info['company_logo_height_default'].'"' : '';
+                                                    }
+                                                    else
+                                                    {
+                                                        if(!empty($default_form_info))
+                                                        {
+                                                            $company_logo = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['company_logo_default'];
+                                                            $company_logo_width = ($default_form_info['company_logo_width_default']) ? 'width="'.$default_form_info['company_logo_width_default'].'"' : '';
+                                                            $company_logo_height = ($default_form_info['company_logo_height_default']) ? 'height="'.$default_form_info['company_logo_height_default'].'"' : '';
+                                                        }
+                                                        else
+                                                        {
+                                                            $company_logo = 'data/frontImages/hotels/design_images/no_company_logo.gif';
+                                                            $company_logo_width = 'width="80"';
+                                                            $company_logo_height = 'height="60"';
+                                                        }
+                                                    }
+                                                }
+                                                else
+                                                {
+                                                    if(!empty($default_form_info))
+                                                    {
+                                                        $company_logo = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['company_logo_default'];
+                                                        $company_logo_width = ($default_form_info['company_logo_width_default']) ? 'width="'.$default_form_info['company_logo_width_default'].'"' : '';
+                                                        $company_logo_height = ($default_form_info['company_logo_height_default']) ? 'height="'.$default_form_info['company_logo_height_default'].'"' : '';
+                                                    }
+                                                    else
+                                                    {
+                                                        $company_logo = 'data/frontImages/hotels/design_images/no_company_logo.gif';
+                                                        $company_logo_width = 'width="80"';
+                                                        $company_logo_height = 'height="60"';
+                                                    }
+                                                }
+                                        ?>
+                                        <img src="<?php echo $company_logo; ?>" <?php echo $company_logo_width.' '.$company_logo_height; ?> style="border:1px solid #CCCCCC;"/>
+                                        <?php
+                                            }
+                                        ?>
+                                        </td>
+                                        <td>
+                                            <?php														
+                                                if($allow_certified == 'Yes')
+                                                {
+                                                    if($packages->isPackageFrontendField($module,$controller,$action.'_pic_certi',$mem_user_id,$mem_role_id))
+                                                    {
+                                                        $package_pic_certi_info = $packages->getPackageFrontendFieldDetailsValue($module,$controller,$action.'_pic_certi',$mem_user_id,$mem_role_id);				
+                                                        if(!empty($package_pic_certi_info))
+                                                        {
+                                                            $forms_info = $forms_db->getFormsInfo($package_pic_certi_info['form_id']);
+                                                            if(!empty($package_pic_certi_info['field_value']))
+                                                            {
+                                                                $package_pic_certi = $this->serverUrl().$this->baseUrl().'/'. $forms_info['attach_file_path'].'/'.$package_pic_certi_info['field_value'];
+                                                                $package_pic_certi_width = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_pic_certi_width',$mem_user_id,$mem_role_id);
+                                                                $package_pic_certi_height = $packages->getPackageFrontendFieldValue($module,$controller,$action.'_pic_certi_height',$mem_user_id,$mem_role_id);
+                                                                $package_pic_certi_width_field = ($package_pic_certi_width) ? 'width="'.$package_pic_certi_width.'"' : '';
+                                                                $package_pic_certi_height_field = ($package_pic_certi_height) ? 'height="'.$package_pic_certi_height.'"' : '';
+                                                            }
+                                                            else
+                                                            {
+                                                                $package_pic_certi = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['property_frontend_details_pic_certi_default'];
+                                                                $package_pic_certi_width_field = ($default_form_info['property_frontend_details_pic_certi_width_default']) ? 'width="'.$default_form_info['property_frontend_details_pic_certi_width_default'].'"' : '';
+                                                                $package_pic_certi_height_field = ($default_form_info['property_frontend_details_pic_certi_height_default']) ? 'height="'.$default_form_info['property_frontend_details_pic_certi_height_default'].'"' : '';
+                                                            }
+                                                        }
+                                                        else
+                                                        {
+                                                            $package_pic_certi = $this->serverUrl().$this->baseUrl().'/'. $default_form_id[0]['attach_file_path'].'/'.$default_form_info['property_frontend_details_pic_certi_default'];
+                                                            $package_pic_certi_width_field = ($default_form_info['property_frontend_details_pic_certi_width_default']) ? 'width="'.$default_form_info['property_frontend_details_pic_certi_width_default'].'"' : '';
+                                                            $package_pic_certi_height_field = ($default_form_info['property_frontend_details_pic_certi_height_default']) ? 'height="'.$default_form_info['property_frontend_details_pic_certi_height_default'].'"' : '';
+                                                        }
+                                                    }
+                                                    else
+                                                    {
+                                                        $package_pic_certi = null;
+                                                    }
+                                                    if($package_pic_certi)
+                                                    {
+                                            ?>
+                                                        <img src="<?php echo $package_pic_certi; ?>" <?php echo $package_pic_certi_width_field.' '.$package_pic_certi_height_field; ?> style="border:1px solid #CCCCCC;"/>
+                                            <?php
+                                                    }
+                                                }
+                                            ?>
+                                        </td>
+                                      </tr>
+                                     </table>
+                                </td>
+                          </tr>
+                          <tr>
+                            <td>&nbsp;</td>
+                            <td>&nbsp;</td>
+                          </tr>
+                          
+                      </table></td>
+                    </tr>
+                  </table></td>
+                </tr>
+                <?php
+                }
+                ?>
+              </table></td>
+            </tr>
+            
+          </table>
+        </div>
+        
+        
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-3">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="hotel-title-2"><?php echo $this->translator->translator('hotels_front_page_Title_floorplan'); ?></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td><table width="100%" cellpadding="0" cellspacing="0">
+                    <tr>
+                        <?php
+                            if($this->group_datas['file_thumb_width'] && ($this->group_datas['file_thumb_resize_func'] != 'resizeToHeight' || $this->group_datas['file_thumb_resize_func'] != 'resize' ))
+                            { 
+                                $width_img = 'width="'.$this->escape($this->group_datas['file_thumb_width']).'"'; 
+                            }
+                            else
+                            {
+                                $width_img = '';
+                            } 
+                            if($this->group_datas['file_thumb_height'] && ( $this->group_datas['file_thumb_resize_func'] != 'resizeToWidth' || $this->group_datas['file_thumb_resize_func'] != 'resize' ))
+                            { 
+                                $height_img = 'height="'.$this->escape($this->group_datas['file_thumb_height']).'"'; 
+                            } 
+                            else
+                            {
+                                $height_img = '';
+                            }
+                            if($this->view_datas['feature_interior_plan_image'])
+                            {
+                                $img_froor_arr = explode(',',$this->view_datas['feature_interior_plan_image']);
+                                $i = 1;
+                                foreach($img_froor_arr as $key => $value)
+                                {
+                            ?>
+                            <td style="padding:1px;">
+                                <a href="javascript:void(0);" class="change_img preview" link="data/frontImages/hotels/interior_plan_image/<?php echo $value; ?>" <?php echo $width; ?> <?php echo $height; ?> title="<?php echo $this->escape($this->hotelsForm->hotels_name->getValue()); ?>"><img src="data/frontImages/hotels/interior_plan_image/<?php echo $value; ?>" <?php echo $width_img.' '.$height_img; ?> border="0" style="border:1px solid #CCCCCC; padding:4px;"/></a>
+                            </td>
+                            <?php
+                                    if($i % $this->group_datas['file_col_num'] == 0){ echo '</tr><tr>'; }
+                                    $i++;
+                                }
+                            }
+                        ?>
+                    </tr>
+                </table></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </div>
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-4">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+              <td width="56%" valign="top">
+                <table width="96%" border="0" cellspacing="0" cellpadding="5">						
+                    <tr>
+                      <td width="43%" class="hotel-title-2"><?php echo $this->hotelsForm->feature_facilities->getAttrib('font_end_label'); ?></td>
+                      </tr>
+                    
+                    <tr>
+                      <td><?php
+                            if($this->hotelsForm->feature_facilities->getValue())
+                            { 
+                                $feature_facilities_arr = explode(',', $this->hotelsForm->feature_facilities->getValue()); 
+                                foreach($feature_facilities_arr as $key=>$value)
+                                {
+                                    echo '<div style="float:left;text-align:left;width:200px;">'.$this->escape($value).'</div>';
+                                }
+                            }						  
+                      ?></td>
+                      </tr>						
+                </table>
+              </td>
+            </tr>
+            
+            <tr>
+              <td width="56%" valign="top">
+                <table width="96%" border="0" cellspacing="0" cellpadding="5">						
+                    <tr>
+                      <td width="43%" class="hotel-title-2"><?php echo $this->hotelsForm->feature_sports_recreations->getAttrib('font_end_label'); ?></td>
+                      </tr>
+                    
+                    <tr>
+                      <td><?php 
+                            if($this->hotelsForm->feature_sports_recreations->getValue())
+                            { 
+                                $feature_sports_recreations_arr = explode(',', $this->hotelsForm->feature_sports_recreations->getValue()); 
+                                foreach($feature_sports_recreations_arr as $key=>$value)
+                                {
+                                    echo '<div style="float:left;text-align:left;width:200px;">'.$this->escape($value).'</div>';
+                                }
+                            }						  
+                      ?></td>
+                      </tr>						
+                </table>
+              </td>
+            </tr>
+            <?php if($this->hotelsForm->feature_additional->getValue()){ ?>
+            <tr>
+              <td width="56%" valign="top">
+                <table width="96%" border="0" cellspacing="0" cellpadding="5">						
+                    <tr>
+                      <td width="43%" class="hotel-title-2"><?php echo $this->hotelsForm->feature_additional->getAttrib('font_end_label');  ?></td>
+                      </tr>
+                    
+                    <tr>
+                      <td><?php 
+                                echo $this->escape($this->hotelsForm->feature_additional->getValue()); 						  
+                      ?></td>
+                      </tr>						
+                </table>
+              </td>
+            </tr>
+            <?php } ?>
+          </table>
+        </div>
+        
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-5">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#333333;">
+            <?php
+            if($this->hotelsForm->hotels_about_information->getValue())
+            {
+            ?>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_about_information->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_about_information->getValue()); ?></td>
+                      </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            if($this->hotelsForm->hotels_about_general->getValue())
+            {
+            ?>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_about_general->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_about_general->getValue()); ?></td>
+                      </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            if($this->hotelsForm->hotels_about_services->getValue())
+            {
+            ?>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_about_services->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_about_services->getValue()); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            if($this->hotelsForm->hotels_policy_surroundings->getValue())
+            {
+            ?>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_policy_surroundings->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_policy_surroundings->getValue()); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            if($this->hotelsForm->hotels_about_other->getValue())
+            {
+            ?>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_about_other->getAttrib('font_end_label');  ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_about_other->getValue()); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            ?>
+          </table>	
+        </div>	
+        
+        <br />
+        <br />	
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-6">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="hotel-title-2"><?php echo $this->hotelsForm->brochure_desc->getAttrib('font_end_label');  ?></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td><table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#F9F9F9" style="border:1px solid #CCCCCC;">
+                <tr>
+                  <td height="40" align="center" class="topbar_1 hotel-title-2" style="border-bottom:1px solid #E2E2E2;"><?php echo $this->escape($this->hotelsForm->brochure_title->getValue()); ?></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px;"><table width="100%" border="0" align="center" cellpadding="4" cellspacing="0" style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#333333;">
+                      
+                      <tr>
+                        <td width="21%"><?php echo $this->escape($this->hotelsForm->brochure_desc->getValue()); ?></td>
+                      </tr>
+                  </table></td>
+                </tr>
+              </table></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            
+          </table>
+        </div>
+        
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-7">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="hotel-title-2"><?php echo $this->translator->translator('hotels_front_page_hotels_map'); ?></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td><table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#F9F9F9" style="border:1px solid #CCCCCC;">
+                <tr>
+                  <td height="40" align="center" class="topbar_1 hotel-title-2" style="border-bottom:1px solid #E2E2E2;"><?php echo $this->hotelsForm->feature_google_map->getAttrib('font_end_label');  ?></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px;"><table width="100%" border="0" align="center" cellpadding="4" cellspacing="0">
+                      <tr>
+                        <td width="21%" align="center"><?php echo $this->escape($this->hotelsForm->feature_google_map->getValue()); ?></td>
+                      </tr>						
+                  </table></td>
+                </tr>
+              </table></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </div>
+        
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-8">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0">
+            <tr>
+                <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td class="hotel-title-2"><?php echo $this->translator->translator('hotels_front_page_hotels_financing'); ?></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+            <tr>
+              <td><table width="100%" border="0" align="center" cellpadding="0" cellspacing="0" bgcolor="#F9F9F9" style="border:1px solid #CCCCCC;">
+                <tr>
+                  <td height="40" align="center" class="topbar_1 hotel-title-2" style="border-bottom:1px solid #E2E2E2;"><?php echo $this->hotelsForm->payment_desc->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td style="padding:5px;"><table width="100%" border="0" align="center" cellpadding="4" cellspacing="0">
+                      <tr>
+                        <td width="21%"><?php echo $this->escape($this->hotelsForm->payment_desc->getValue()); ?></td>
+                      </tr>						
+                  </table></td>
+                </tr>
+              </table></td>
+            </tr>
+            <tr>
+              <td>&nbsp;</td>
+            </tr>
+          </table>
+        </div>
+        
+        <br />
+        <br />
+        
+        <div style="border:1px solid #CCCCCC; padding:5px;font-size:12px;" id="tabs-9">
+          <table width="98%" border="0" align="center" cellpadding="0" cellspacing="0" style="font-family:Arial, Helvetica, sans-serif; font-size:12px; color:#333333;">
+            <?php
+            if($this->hotelsForm->hotels_policy_policies->getValue())
+            {
+            ?>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_policy_policies->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_policy_policies->getValue()); ?></td>
+                      </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            if($this->hotelsForm->hotels_policy_terms_condition->getValue())
+            {
+            ?>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_policy_terms_condition->getAttrib('font_end_label'); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_policy_terms_condition->getValue()); ?></td>
+                      </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }
+            if($this->hotelsForm->hotels_policy_privacy->getValue())
+            {
+            ?>
+                <tr>
+                    <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td class="hotel-title-2"><?php echo $this->hotelsForm->hotels_policy_privacy->getAttrib('font_end_label');?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                      <td><?php echo $this->escape($this->hotelsForm->hotels_policy_privacy->getValue()); ?></td>
+                </tr>
+                <tr>
+                  <td>&nbsp;</td>
+                </tr>
+            <?php
+            }	
+            ?>				
+          </table>	
+        </div>	
+        
+        <br />
+        <br />		
+        
+        <?php
+            
+            if(!empty($staticGroupsObj))
+            {
+                $tab =  10;
+                foreach($staticGroupsObj as $staticGroup)
+                {
+                    $elementsObj = $staticGroup->getElements();
+            ?>
+            <div id="tabs-<?php echo $tab; ?>">
+                <table width="98%" border="0" align="center" cellpadding="5" cellspacing="0" style="font-size:13px; color:#000000; font-family:Arial, Helvetica, sans-serif;">
+                    <?php																
+                        foreach($elementsObj as $element)
+                        {
+                            if($element->getAttrib('frontend') == '1')
+                            {	
+                                if($element->getType() != 'Zend_Form_Element_File')
+                                {	
+                                    $element_value = $element->getValue();											
+                                    if((is_array($element_value) && !empty($element_value[0])) || (!is_array($element_value) && !empty($element_value)) )
+                                    {														
+                    ?>	
+                                    <tr>
+                                      <td width="24%"   valign="top" style="padding-left:5px;"><?php echo $element->getLabel();  ?></td>
+                                      <td width="76%" valign="top">
+                                          <?php 										
+                                            $id_f = $element->getAttrib('id');
+                                            $id_arr = explode('_',$id_f);	
+                                            if(($element->getType() == 'Zend_Form_Element_MultiCheckbox') || ($element->getType() == 'Zend_Form_Element_Multiselect'))
+                                            {	
+                                                $val_arr = $element_value;														
+                                                echo implode(', ',$val_arr);
+                                            }
+                                            else
+                                            {													
+                                                echo $this->escape($element_value);	
+                                            }														
+                                        ?>														
+                                      </td>
+                                    </tr>
+                                    <tr>
+                                      <td width="24%" valign="top"></td>
+                                      <td width="76%" valign="top"></td>
+                                    </tr>	
+                    <?php
+                                    }
+                                }
+                            }
+                        }
+                    ?>													
+                </table>
+            </div>
+        <?php
+                $tab++;
+             }
+         }
+        ?>
+    </div>			
+    </td>
+    </tr>
+    </table></td>
+    </tr>
+    <tr>
+    <td>&nbsp;</td>
+    </tr>
+    
+    </table>
+</div>
+</body>
+</html>

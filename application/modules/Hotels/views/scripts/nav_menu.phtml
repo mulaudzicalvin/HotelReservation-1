@@ -1,0 +1,88 @@
+<?php
+$frontController = Zend_Controller_Front::getInstance();	
+$getController = $frontController->getRequest()->getControllerName();
+$getAction = $frontController->getRequest()->getActionName();
+$translator = Zend_Registry::get('translator'); 
+?>
+
+<div id="nav">
+	<div class="nav-header"><div class="nav-title"><?php echo $translator->translator('hotels_menu_title'); ?></div></div>
+    <div class="nav-body">
+    	<ul>
+        	<?php if ($this->allow('list','api','Hotels')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'api'){ ?> class="hotel-api selected"<?php }else{ ?>class="hotel-api"<?php } ?>>
+			<a href="<?php echo $this->url(array('module' => 'Hotels','controller'=>'api', 'action'=>'list'),'adminrout',true);?>" ><?php echo $translator->translator('hotels_menu19'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('listgrp','backendgrp','Hotels')) : ?>
+			<li <?php if($getAction == 'listgrp' && strtolower($getController) == 'backendgrp'){ ?> class="hotel-group selected"<?php }else{ ?>class="hotel-group"<?php } ?>>
+			<a href="<?php echo $this->url(array('module' => 'Hotels','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true);?>" ><?php echo $translator->translator('hotels_menu1'); ?></a>
+			</li>
+			<?php endif; ?>
+			
+            <?php if ($this->allow('list','backendrooms','Hotels')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'backendrooms'){ ?> class="hotel-room selected"<?php }else{ ?>class="hotel-room"<?php } ?>>
+			<a href="<?php echo $this->url(array('module' => 'Hotels','controller'=>'backendrooms', 'action'=>'list'),'adminrout',true);?>"><?php echo $translator->translator('hotels_menu8'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','backendroom','Hotels')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'backendroom'){ ?> class="hotel-room-type selected"<?php }else{ ?>class="hotel-room-type"<?php } ?>>
+			<a href="<?php echo $this->url(array('module' => 'Hotels','controller'=>'backendroom', 'action'=>'list'),'adminrout',true);?>"><?php echo $translator->translator('hotels_menu18'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','backend','Hotels')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'backend'){ ?> class="hotel-cat selected"<?php }else{ ?>class="hotel-cat"<?php } ?>>
+			<a href="<?php echo $this->url(array('module' => 'Hotels','controller'=>'backend', 'action'=>'list'),'adminrout',true);?>"><?php echo $translator->translator('hotels_menu2'); ?></a>
+           	</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','backendpro','Hotels')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'backendpro'){ ?> class="hotel selected"<?php }else{ ?>class="hotel"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'backendpro', 'action'     => 'list' ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu3'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('saved','backendpro','Hotels')) : ?>
+			<li <?php if($getAction == 'saved' && strtolower($getController) == 'backendpro'){ ?> class="hotel-saved selected"<?php }else{ ?>class="hotel-saved"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'backendpro', 'action'     => 'saved' ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu7'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','backendtype','Hotels')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'backendtype'){ ?> class="hotel-type selected"<?php }else{ ?>class="hotel-type"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'backendtype', 'action'     => 'list' ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu4'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','state','Geo')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'state'){ ?> class="hotel-state selected"<?php }else{ ?>class="hotel-state"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Geo', 'controller' => 'state', 'action'     => 'list' ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu5'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','city','Geo')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'city'){ ?> class="hotel-area selected"<?php }else{ ?>class="hotel-area"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Geo', 'controller' => 'city', 'action'     => 'list' ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu6'); ?></a>
+			</li>
+			<?php endif; ?>
+            
+            <?php if ($this->allow('list','backendvote','Vote')) : ?>
+			<li <?php if($getAction == 'list' && strtolower($getController) == 'backendvote'){ ?> class="vote selected"<?php }else{ ?>class="vote"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Vote', 'controller' => 'backendvote', 'action'     => 'list', 'group_id' => 'hotels_page'  ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu9'); ?></a>
+			</li>
+			<?php endif; ?>  
+            
+            <?php 
+			$api_db = new Hotels_Model_DbTable_Api();
+			if ($api_db->isExpediaEnable()) :
+			if ($this->allow('itinerary','backendexpedia','Hotels')) : ?>
+			<li <?php if($getAction == 'itinerary' && strtolower($getController) == 'backendexpedia'){ ?> class="hotel-itinerary selected last"<?php }else{ ?>class="hotel-itinerary last"<?php } ?>>
+			<a href="<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'backendexpedia', 'action'     => 'itinerary'  ),'adminrout',true) ?>"><?php echo $translator->translator('hotels_menu20'); ?></a>
+			</li>
+			<?php endif; endif; ?>  
+        </ul>
+  	</div>
+</div>

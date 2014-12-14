@@ -1,0 +1,38 @@
+<?php 
+$front_template = Zend_Registry::get('front_template'); 
+$this->translator = Zend_Registry::get('translator');
+$global_conf = Zend_Registry::get('global_conf');
+$auth = Zend_Auth::getInstance ();
+$my_account = 'Members-Dashboard' ;
+$sugnIn_link	=	($auth->hasIdentity()) ? '<a href="javascript:void(0);" class="topbar_logout_btn">'.$this->translator->translator('front_topbar_signout','', '', $front_template['theme_folder']).'</a>' : '<a href="Frontend-Login">'.$this->translator->translator('front_topbar_signin','', '', $front_template['theme_folder']).'</a>';
+?>
+<script type="text/javascript">
+
+$(document).ready(function() {	
+	logOut('a.topbar_logout_btn', '<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/loader/ajax-loader-email.gif" />', '', '<?php echo $this->translator->translator('front_topbar_signin','', '', $front_template['theme_folder']); ?>');
+});
+</script>
+<div id="top-bar">
+    <div class="container">
+        <div class="user-link">
+            <span class="welcome"><?php echo $this->translator->translator('front_topbar_welcome','', '', $front_template['theme_folder']).' '.$global_conf['site_name']; ?> | <?php echo $sugnIn_link; ?> | <a href="Registration/104"><?php echo $this->translator->translator('front_topbar_register','', '', $front_template['theme_folder']); ?></a></span>
+        </div>
+            
+        <div class="quick-access">
+            <div class="flags">
+                <?php echo $this->partial('blocks/header_language.phtml'); ?>
+            </div>
+    
+            <div class="top-links">
+                <ul>
+                    <li class="first"><a href="<?php echo $my_account; ?>"><?php echo $this->translator->translator('front_topbar_myaccount','', '', $front_template['theme_folder']); ?></a></li>                               
+                    <li><a href="Register"><?php echo $this->translator->translator('front_topbar_registration','', '', $front_template['theme_folder']); ?></a></li>
+                    <li><a href="Feedback"><?php echo $this->translator->translator('front_topbar_feedback','', '', $front_template['theme_folder']); ?></a></li>
+                    <li><a href="Sitemap"><?php echo $this->translator->translator('front_topbar_sitemap','', '', $front_template['theme_folder']); ?></a></li>
+                    <li><a href="Contact-Us"><?php echo $this->translator->translator('front_topbar_contact','', '', $front_template['theme_folder']); ?></a></li>
+                </ul>
+             </div>
+        </div>       
+    </div>
+</div>
+<span class="top-bar-border"></span>

@@ -1,0 +1,47 @@
+<?php 
+$front_template = Zend_Registry::get('front_template'); 
+$this->translator = Zend_Registry::get('translator');
+$global_conf = Zend_Registry::get('global_conf');
+?>
+
+<footer id="footer">
+    <div class="container">
+        <div class="links">
+            <ul>
+                <li class="first"><a href="About-Us"><?php echo $this->translator->translator('common_front_footer_about','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="Partners"><?php echo $this->translator->translator('common_front_footer_partners','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="Customer-Services"><?php echo $this->translator->translator('common_front_footer_customerservices','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="Press-Center"><?php echo $this->translator->translator('common_front_footer_press','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="FAQ"><?php echo $this->translator->translator('common_front_footer_FAQ','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="Career"><?php echo $this->translator->translator('common_front_footer_career','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="Terms-Conditions"><?php echo $this->translator->translator('common_front_footer_terms','', '', $front_template['theme_folder']); ?></a></li>
+                <li><a href="Privacy-Statement"><?php echo $this->translator->translator('common_front_footer_privacy','', '', $front_template['theme_folder']); ?></a></li>
+            </ul>
+            
+            <hr />
+            <div class="copyright">
+                <?php echo $this->translator->translator('common_footer_copy_right'); ?> <?php echo date("Y"); ?> <?php echo $this->translator->translator('common_footer_all_right'); ?> &nbsp;<a href="http://www.<?php if(!empty($global_conf['frontend_footer_url'])){ echo $global_conf['frontend_footer_url']; }else if(!empty($validation_data['vendor_domain'])){  echo $validation_data['vendor_domain']; }else{ echo 'eicra.com'; } ?>" target="_blank" title="<?php if(!empty($global_conf['frontend_footer'])){ echo $global_conf['frontend_footer']; }else if($validation_data['footer_name']){ echo $validation_data['footer_name']; }else{ echo 'Eicra Soft Ltd'; } ?>"><?php echo $this->translator->translator('common_footer_web_develop_label'); ?></a>
+                <?php if(!empty($global_conf['frontend_footer'])){ echo $global_conf['frontend_footer']; }else if($validation_data['footer_name']){ echo $validation_data['footer_name']; }else{ echo 'Eicra Soft Ltd'; } ?>                                      
+                <?php echo $this->translator->translator('common_vesrion_label'); ?> <?php echo Eicra_License_Version::getVersion(); ?>
+            </div>
+            <hr />
+            <span><?php echo $this->translator->translator('secure_payment_title','', '', $front_template['theme_folder']); ?></span>
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/paypal.png" height="23" border="0" title="PayPal">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/2co.png" height="23" border="0" title="2Checkout">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/moneybookers.png" height="23" border="0" title="Money Bookers">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/worldpay.png" height="23" border="0" title="World Pay">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/payza.png" height="23" border="0" title="Payza">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/cc-avenue.png" height="23" border="0" title="CC-Avenue">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/webpay.png" height="23" border="0" title="WebPay">
+        </div>
+        
+        <div class="social">
+            <?php echo $this->translator->translator('always_stay_connected','', '', $front_template['theme_folder']); ?><br><br>
+            <a href="http://www.facebook.com" target="_blank"><img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/facebook.png" width="41" height="41" border="0" title="Facebook"></a>
+            <a href="http://www.twitter.com" target="_blank"><img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/twitter.png" width="41" height="41" border="0" title="Twitter"></a>
+            <a href="https://plus.google.com" target="_blank"><img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/google-plus.png" width="41" height="41" border="0" title="Google Plus"></a>
+            <a href="http://feeds.feedburner.com" target="_blank"><img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/rss.png" width="41" height="41" border="0" title="RSS"></a>
+            <a href="http://www.youtube.com" target="_blank"><img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/youtube.png" width="41" height="41" border="0" title="You Tube"></a>
+        </div>
+    </div>
+</footer>

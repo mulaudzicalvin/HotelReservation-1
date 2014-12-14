@@ -1,0 +1,89 @@
+<?php
+class marquee_ad
+{
+	protected	$_id;
+	protected	$_order = '4';
+	protected	$_DBconn;
+	protected	$_front_template;
+	protected	$_view;
+	protected   $_image_on = '0';
+	protected   $_group = '5';
+	
+	public function __construct($view) 
+	{
+		$this->_front_template = Zend_Registry::get('front_template'); 
+		$this->_view =	$view;
+		
+		$helper_path = $this->_view->getHelpers();
+		$doc_view = $helper_path[Doctype]->view;
+		$catInfo = $doc_view->catInfo;
+		$this->_id = ($catInfo['id'])? $catInfo['id'] : '54';
+		
+		//DB Connection
+		$this->_DBconn = Zend_Registry::get('msqli_connection');
+		$this->_DBconn->getConnection();
+	}
+	
+	public function truncate($phrase,$start_words, $max_words)
+	{
+	   $phrase_array = explode(' ',$phrase);
+	   if(count($phrase_array) > $max_words && $max_words > 0)
+		  $phrase = implode(' ',array_slice($phrase_array, $start_words, $max_words)).'...';  
+	   return $phrase;
+	}
+	
+	public function class_body()
+	{
+		$translator = Zend_Registry::get('translator');
+		$partial_Obj = new News_Controller_Helper_PartialAd();
+		$partial_info = $partial_Obj->getAdd($this->_id,$this->_order);
+		echo $this->_view->headScript()->setFile('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/vendor/scripts/js/jquery.simplyscroll.js');
+		echo $this->_view->headLink()->setStylesheet('application/layouts/scripts/'.$this->_front_template['theme_folder'].'/css/jquery.simplyscroll.css');
+?>
+		
+<script type="text/javascript">
+(function($) {
+	$(function() {
+		$("#scroller").simplyScroll();		
+	});
+})(jQuery);
+</script>
+      
+<div class="block block-scrolling-ad">
+	<div class="block-content">
+    	<h2><?php echo $translator->translator('block_ad_marquee_title','', '', $this->_front_template['theme_folder']); ?></h2>
+        <ul id="scroller"> 
+            <?php
+                if($partial_info)
+                {
+                    foreach($partial_info as $entry)
+                    {	
+						if($this->_image_on == '1')
+						{ 
+                        	echo '<li><img src="data/frontImages/news/page_thumb/'.$entry['page_thumb'].'" /></li>';
+						}
+						else
+						{
+							echo '<li>'.stripslashes($entry['page_desc']).'</li>';
+						}
+                    } 
+                }
+            ?>
+        </ul>
+    </div>
+</div>
+	
+<?php
+	}
+}
+
+try
+{
+	$marquee_ad_class = new marquee_ad($this);
+	$marquee_ad_class->class_body();
+}
+catch(Exception $e)
+{
+	echo 'You have to create menu first.';
+}
+?>

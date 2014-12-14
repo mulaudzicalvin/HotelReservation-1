@@ -1,0 +1,1069 @@
+<?php
+		$this->headTitle()->headTitle($this->translator->translator('invoice_edit_page_name'),'SET');
+		echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/jquery.scrollTo.js');		
+		$this->invoiceForm->setEditor($this->serverUrl().$this->baseUrl());
+		$this->invoiceForm->getEditor();	
+		
+		$templates_db = new Newsletter_Model_DbTable_Templates();
+		$email_templates	=	$templates_db->getTemplatesData('invoice_template') ;		
+		
+		$global_conf = Zend_Registry::get('global_conf');
+		$currency = new Zend_Currency($global_conf['default_locale']);
+		$currencySymbol = $currency->getSymbol();
+		$currencyShort = $currency->getShortName();	
+?>
+	
+<style type="text/css">
+	.CodeMirror{ width: 720px; height:750px;}
+	.codemirror-ui-clearfix{ width:720px;}
+	
+/* INVOICE START ******************************************************************** */
+
+.first-payment .paid{
+	font-weight:bold;
+	color:#090;
+}
+
+.first-payment .due{
+	font-weight:bold;
+	color:#F00;
+}
+
+.invoice-satus{
+	display:block;
+}
+
+.invoice-satus.paid{
+	border:1px solid #93DD88;
+	background-color:#D5FFCE;
+	color:#009900;
+}
+
+.invoice-satus.unpaid{
+	border:1px solid #FF8A8A;
+	background-color:#FFCECE;
+	color:#FA1919;
+}
+
+.invoice-satus.cancel{
+	border:1px solid #FFCC33;
+	background-color:#FFFFB0;
+	color:#FF6600;
+}
+
+.client-info{
+	width:49%;
+	float:left;	
+}
+
+.invoice-info{
+	width:49%;
+	float:right;
+}
+
+.client-info .amount-payable,
+.invoice-info .amount-payable{
+	font-weight:bold;
+	color:#F60;
+}
+
+.payment-info{
+	width:47%;
+	float:right;
+	padding:20px 10px;
+	margin-top:21px;
+	background-color:#E3F1FD;
+    border: 1px solid #A4DBFF;
+	border-radius:5px;
+	-moz-border-radius:5px;
+	-webkit-border-radius:5px;
+	text-align:center;
+}
+
+.payment-info #invoice_status{
+	display:inline-block;
+	margin: 30px 0 30px 0;
+}
+
+.payment-info .btn-spacer{
+	margin: 20px 0;
+	display:inline-block;
+}
+
+.client-info .payable-later,
+.invoice-info .payable-later{
+	font-weight:bold;
+	font-style:italic;
+	color:#090;
+}
+
+.invoice-info .invoice-satus{
+	display:inline-block;
+	padding:2px 10px;
+}
+
+.client-info .grand-total,
+.invoice-info .grand-total{
+	font-weight:bold;
+}
+
+.invoice-container{
+	border:1px solid #D6D6D6;
+}
+
+.invoice .invoice-chart{
+	width:100%;
+	display:table;
+	margin:auto;
+	border-spacing:0;
+}
+
+.invoice .invoice-chart .div-head,
+.invoice .invoice-chart .div-hr{
+	display:table-row;
+	background:#F4F4F4;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#F4F4F4', endColorstr='#E5E5E5');
+	background: -moz-linear-gradient(top, #F4F4F4, #E5E5E5);
+	background: -webkit-gradient(linear, left top, left bottom, from(#F4F4F4), to(#E5E5E5));
+	box-shadow: 0 1px 1px #FFFFFF inset;
+}
+
+.invoice .invoice-chart .div-head{
+	text-align:center;
+	font-weight:bold;
+	font-size:13px;
+	color:#272727;
+	text-shadow:1px 1px 1px #FFF;
+	border-bottom:1px solid #D6D6D6;
+}
+
+.invoice .invoice-chart .div-hr{
+	background:none;
+}
+
+.invoice .invoice-chart .div-head .div-vr-1,
+.invoice .invoice-chart .div-head .div-vr-2,
+.invoice .invoice-chart .div-hr .div-vr-1,
+.invoice .invoice-chart .div-hr .div-vr-2{
+	display:table-cell;
+	padding:10px;
+}
+
+
+.invoice .invoice-chart .div-head .div-vr-1,
+.invoice .invoice-chart .div-head .div-vr-2{
+	border-bottom:1px solid #D6D6D6;
+	padding:15px 0;
+}
+
+.invoice .invoice-chart .div-head .div-vr-1,
+.invoice .invoice-chart .div-hr .div-vr-1{
+	width:65%;
+}
+.invoice .invoice-chart .div-head .div-vr-2,
+.invoice .invoice-chart .div-hr .div-vr-2{
+	width:35%;
+}
+
+.invoice .invoice-chart .div-hr .div-vr-1,
+.invoice .invoice-chart .div-hr .div-vr-2{
+	border-bottom:1px solid #D6D6D6;
+}
+
+.invoice .invoice-chart .div-hr .div-vr-2{
+	text-align:right;
+}
+
+.invoice .invoice-chart .div-hr.amount-hr{
+	text-align:right;
+	background-color:#EFEFEF;
+	font-size:13px;
+}
+
+.invoice .invoice-chart .div-hr.amount-hr .div-vr-1,
+.invoice .invoice-chart .div-hr.amount-hr .div-vr-2{
+	border-top:1px solid #D6D6D6;
+	border-bottom:none
+}
+
+.invoice .item-title{
+	font-size:17px;
+	margin:10px auto 2px auto;
+	padding:10px 0px 10px 5px;
+	background-color:#FFC;
+	border-top:1px solid #FC0;
+	border-bottom:1px solid #FC0;
+}
+
+.invoice .product-title{
+	color:#F60;
+	font-weight:bold;
+	font-style:italic;
+	text-decoration:underline;
+}
+
+.invoice .amount-label{
+	font-weight:bold;
+}
+
+h1.status-paid,
+h1.status-unpaid,
+h1.status-cancelled{
+	font-weight:bold;
+	font-size:55px;
+	text-align:left;
+	text-transform:uppercase;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	padding:5px 20px;
+	float:left;
+}
+
+h1.status-paid .invoice-satus.paid,
+h1.status-unpaid .invoice-satus.unpaid,
+h1.status-cancelled .invoice-satus.cancel{
+	border:0;
+}
+
+h1.status-paid{
+	border:1px solid #87D97B;
+	background-color:#D5FFCE;
+}
+
+h1.status-unpaid{
+	border:1px solid #DF8F8F;
+	background-color:#FFCECE;
+}
+
+h1.status-cancelled{
+	border:1px solid #E4D949;
+	background-color:#FFFBCC;
+}
+
+/* Invoice Preview Box -------------------------------------------------------------- */
+	
+.ui-tooltip-wiki{
+	max-width: 850px; 
+}
+ 
+.ui-tooltip-wiki .ui-tooltip-content{
+	padding: 10px;
+  	line-height: 12.5px;
+  	width: 828px;
+  	height:500px;
+  	overflow:auto;
+}
+
+.ui-tooltip-wiki h1{
+	margin: 0 0 7px;
+	font-size: 1.5em;
+	line-height: 1em;
+}
+
+.ui-tooltip-wiki img{ 
+	padding: 0 10px 0 0; 
+}
+
+.ui-tooltip-wiki p{
+	margin-bottom: 9px; 
+}
+
+.ui-tooltip-wiki .note{
+	margin-bottom: 0; 
+	font-style: italic; 
+	color: #888; 
+}
+
+.itinerary-price{
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	border:1px solid #06C;
+	padding:10px 10px;
+	position:absolute;
+	letter-spacing:-1px;
+	font-size:24px;
+	font-weight:bold;
+	color:#06C;
+	top:13px;
+	right:20px;	
+}
+
+.itinerary-status-cont{
+	position:absolute;
+	top:13px;
+	right:45%;	
+}
+
+h3.itinerary-status{
+	font-family:Arial, Helvetica, sans-serif;
+	font-weight:bold;
+	font-size:25px;
+	text-transform:uppercase;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	padding:2px 20px;
+}
+
+h3.itinerary-status.active{
+	border:1px solid #87D97B;
+	background-color:#D5FFCE;
+	color:#009900;
+}
+
+h3.itinerary-status.inactive{
+	border:1px solid #DF8F8F;
+	background-color:#FFCECE;
+	color:#FA1919;
+}
+
+/* INVOICE END ********************************************************************** */
+
+
+.button a,
+.other-btn a,
+.select-btn a,
+.paid-btn a,
+.trust-btn a,
+.block-btn a,
+.unpaid-btn a,
+.cancel-btn a,
+.add-btn a,
+.remove-btn a,
+input[type="button"]{
+	background: #225C8C;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#0099FF', endColorstr='#003399');
+	background: -webkit-gradient(linear, left top, left bottom, from(#0099FF), to(#003399));
+	background: -moz-linear-gradient(top, #0099FF, #003399);
+	border:1px solid #0066CC;
+	color:#FFF;
+	font-family:Arial, Helvetica, sans-serif;
+	font-weight:bold;
+	padding: 10px 25px;
+	cursor:pointer;
+	box-shadow: 0 1px 1px #77C9FF inset;
+	border-radius:4px;
+	-moz-border-radius:4px;
+	-webkit-border-radius:4px;
+	display:inline-block;
+}
+
+.other-btn a:hover,
+.select-btn a:hover,
+.paid-btn a:hover,
+.trust-btn a:hover,
+.block-btn a:hover,
+.unpaid-btn a:hover,
+.cancel-btn a:hover,
+.add-btn a:hover,
+.remove-btn a:hover,
+input[type="button"]:hover{
+	background: #303436;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#535B5E', endColorstr='#1A1A1A');
+	background: -webkit-gradient(linear, left top, left bottom, from(#535B5E), to(#1A1A1A));
+	background: -moz-linear-gradient(top, #535B5E, #1A1A1A);
+	border:1px solid #333;
+	box-shadow: 0 1px 1px #999 inset;
+	text-decoration:none;
+}
+
+.select-btn a,
+.paid-btn a,
+.trust-btn a,
+.add-btn a,
+.action_button.trust{
+	background: #75A80B;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#B0D630', endColorstr='#75A80B');
+	background: -webkit-gradient(linear, left top, left bottom, from(#B0D630), to(#75A80B));
+	background: -moz-linear-gradient(top, #B0D630, #75A80B);
+	border:1px solid #7A991E;
+	box-shadow: 0 1px 1px #CCFF00 inset;
+	text-shadow: 0 1px 1px #060;
+	color:#FFF;
+	padding: 6px 20px;
+	margin:2px 0;
+}
+
+.select-btn a:hover,
+.paid-btn a:hover,
+.trust-btn a:hover,
+.add-btn a:hover,
+.action_button.trust:hover{
+	background: #388E00;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#A4CD28', endColorstr='#388E00');
+	background: -webkit-gradient(linear, left top, left bottom, from(#A4CD28), to(#388E00));
+	background: -moz-linear-gradient(top, #A4CD28, #388E00);
+	border:1px solid #7A991E;
+	box-shadow: 0 1px 1px #CCFF00 inset;
+}
+
+.unpaid-btn a,
+.block-btn a,
+.action_button.ban{
+	background: #930000;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#E10000', endColorstr='#930000');
+	background: -webkit-gradient(linear, left top, left bottom, from(#E10000), to(#930000));
+	background: -moz-linear-gradient(top, #E10000, #930000);
+	border:1px solid #990000;
+	box-shadow: 0 1px 1px #FF5959 inset;
+	text-shadow: 0 1px 1px #060;
+	color:#FFF;
+	padding: 6px 20px;
+}
+
+.unpaid-btn a:hover,
+.block-btn a:hover,
+.action_button.ban:hover{
+	background: #6C0000;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#DD0000', endColorstr='#6C0000');
+	background: -webkit-gradient(linear, left top, left bottom, from(#DD0000), to(#6C0000));
+	background: -moz-linear-gradient(top, #DD0000, #6C0000);
+	border:1px solid #990000;
+	box-shadow: 0 1px 1px #FF5959 inset;
+}
+
+.other-btn a,
+.remove-btn a,
+.cancel-btn a{
+	background: #FC5400;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FFB833', endColorstr='#FC5400');
+	background: -webkit-gradient(linear, left top, left bottom, from(#FFB833), to(#FC5400));
+	background: -moz-linear-gradient(top, #FFB833, #FC5400);
+	border:1px solid #FB6A00;
+	box-shadow: 0 1px 1px #FEEB67 inset;
+	text-shadow: 0 1px 1px #FF3300;
+	color:#FFF;
+	padding: 6px 20px;
+}
+
+.other-btn a:hover,
+.remove-btn a:hover,
+.cancel-btn a:hover{
+	background: #E85C00;
+	filter: progid:DXImageTransform.Microsoft.gradient(startColorstr='#FF9900', endColorstr='#E85C00');
+	background: -webkit-gradient(linear, left top, left bottom, from(#FF9900), to(#E85C00));
+	background: -moz-linear-gradient(top, #FF9900, #E85C00);
+	border:1px solid #F23100;
+	box-shadow: 0 1px 1px #FEEB67 inset;
+} 
+</style>
+
+<script type="text/javascript">
+var settingObj = {
+						tab_base_link: '',
+						form_action : {
+											form_id: 'formInvoice',
+											hasTinyMCE: true,											
+											currency_symbol:	"<?php echo $currencySymbol; ?>",
+											common_msg_field_id: 'actionMessage',
+											dialog_container_id:	'dialog_container',
+											dialog_progressbar_id:	'progressbar',
+											extra_field_for_reset: [],
+											extra_function_for_reset: function(){}
+									},
+						calendar:	{
+										calendar_include_time: true,	
+										calendar_img_link: 'application/modules/Administrator/layouts/scripts/images/common/calendar.png',
+										monthNamesShort: <?php echo $this->translator->translator("common_calender_monthNamesShort"); ?>,
+										monthNames:		<?php echo $this->translator->translator("common_calender_monthNames"); ?>,
+										dayNamesMin:		<?php echo $this->translator->translator("common_calender_dayNamesMin"); ?>,
+										buttonText:		'calendar',
+										dateFormat:		'yy-mm-dd',
+										dateTimeFormat:     "yyyy-MM-dd HH:mm:ss tt",
+										culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+										value: ''
+						},
+						messages: {
+										display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+										empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+										page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+										of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+										itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+										first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+										previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+										next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+										last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+										refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+										
+										common_msg_dialog_id 		:	'dialog_msg',
+										common_confirn_dialog_id	:	'dialog-confirm',
+										common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",										
+										common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+										common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+										common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+										common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+										common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>"
+									}
+						};
+$(document).ready(function() {
+	/**********Scrolling Tools Start****************/
+	$.easing.elasout = function(x, t, b, c, d) {
+		var s=1.70158;var p=0;var a=c;
+		if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
+		if (a < Math.abs(c)) { a=c; var s=p/4; }
+		else var s = p/(2*Math.PI) * Math.asin (c/a);
+		return a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
+	};
+	
+	$('#toc a').click(function(){//$.scrollTo works EXACTLY the same way, but scrolls the whole screen
+		$.scrollTo( this.hash, 1500, { easing:'swing' });
+		$(this.hash).find('span.message').text( this.title );
+		return false;
+	});
+	
+	$('span.top-go a').click(function(){//$.scrollTo works EXACTLY the same way, but scrolls the whole screen
+		$.scrollTo( this.hash, 1500, { easing:'swing' });		
+		return false;
+	});	
+	/**********Scrolling Tools END****************/
+	
+	$('a.reset_btn').click(function() {
+		commonResetFormFields(settingObj);
+		commonRemoveFormError(settingObj);
+	});
+	
+	$('a.publish_all').click(function() {
+		var self = this;
+		var bigrel = $(self).attr('rel');
+		
+		var id_str = '<?php echo $this->invoice_id; ?>';		
+		
+		$.ajax({
+				url: "<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action'     => 'paid' ), 'adminrout',    true) ?>",
+				type: 'POST',
+				data: { id_st: id_str, paction: bigrel},
+				beforeSend: function(){
+					$(self).html('<span class="icon loader"></span>');
+				 },
+				success: function(response) 
+				{
+					//alert(response);
+					var json_arr = eval("("+response+")");
+					if(json_arr.status == 'ok')
+					{
+						commonMsgDialog(settingObj, "<?php echo $this->translator->translator('invoice_send_email_success'); ?>");
+						switch(bigrel)
+						{
+							case 'paid':
+								$('#invoice_status').html("<h1 class='status-paid'><?php echo $this->translator->translator('common_paid_language'); ?></h1>");
+								$('#now_payable_status').parents('span:first').children('a:first').attr('rel','unpaid');
+								$('#now_payable_status').parents('span:first').children('a:first').text("<?php echo $this->translator->translator('common_unpaid_selected'); ?>");
+								$('#now_payable_status').html("<?php echo $this->translator->translator("invoice_list_invoice_now_payable_paid_language"); ?>");
+								$('#later_payable').fadeOut();															
+								break;
+							case 'unpaid':
+								$('#invoice_status').html("<h1 class='status-unpaid'><?php echo $this->translator->translator('common_unpaid_language'); ?></h1>");
+								$('#now_payable_status').parents('span:first').children('a:first').attr('rel','paid');
+								$('#now_payable_status').parents('span:first').children('a:first').text("<?php echo $this->translator->translator('invoice_list_invoice_now_pay'); ?>");
+								$('#now_payable_status').html("<?php echo $this->translator->translator("invoice_list_invoice_now_payable_unpaid_language"); ?>");
+								$('#later_payable').fadeIn();
+								break;	
+							case 'cancel':
+								$('#invoice_status').html("<h1 class='status-cancelled'><?php echo $this->translator->translator('common_cancelled_language'); ?></h1>");
+								$('#now_payable_status').parents('span:first').children('a:first').attr('rel','paid');
+								$('#now_payable_status').parents('span:first').children('a:first').text("<?php echo $this->translator->translator('invoice_list_invoice_now_pay'); ?>");
+								$('#now_payable_status').html("<?php echo $this->translator->translator("invoice_list_invoice_now_payable_unpaid_language"); ?>");
+								$('#later_payable').fadeOut();
+								break;	
+						}
+					}
+					else
+					{
+						commonMsgDialog(settingObj, json_arr.msg);
+					}	
+					switch(bigrel)
+					{	
+						case 'paid':
+							$(self).html('<span class="icon publish"><?php echo $this->translator->translator("common_paid_selected"); ?></span>');
+							break;
+						case 'unpaid':
+							$(self).html('<span class="icon unpublish"><?php echo $this->translator->translator("common_unpaid_selected"); ?></span>');
+							break;
+						case 'cancel':
+							$(self).html('<span class="icon close"><?php echo $this->translator->translator("common_cancel_selected"); ?></span>');
+							break;
+					}
+				},
+				error: function(xhr, status, error){
+					commonCloseLoaderDialog(settingObj);
+					var msg = "Error! " + xhr.status + " " + error;
+					commonMsgDialog(settingObj, msg);
+				}
+		});			
+		
+	});
+	
+	$('#now_pay').click(function() {
+		var self = this;
+		var paction = $(self).attr('rel');	
+		
+		$.ajax({
+				url: "<?php echo $this->url( array('module'=> 'Invoice', 'controller' => 'backend', 'action'     => 'nowpaid' ), 'adminrout',    true) ?>",
+				type: 'POST',
+				data: { id: '<?php echo $this->invoice_id; ?>', paction: paction},
+				beforeSend: function(){
+					$(self).html('<img src="application/modules/Administrator/layouts/scripts/images/loader/ajax_loader.gif" height="13" border="0" />');
+				 },
+				success: function(response) 
+				{
+					//alert(response);
+					var json_arr = eval("("+response+")");
+					if(json_arr.status == 'ok')
+					{
+						//commonMsgDialog(settingObj, "<?php echo $this->translator->translator('invoice_send_email_success'); ?>");	
+										
+						switch(paction)
+						{	
+							case 'paid':
+								$(self).html('<?php echo $this->translator->translator("common_unpaid_selected"); ?>');
+								$(self).attr('rel', 'unpaid');
+								$('#now_payable_status').html("<?php echo $this->translator->translator('invoice_list_invoice_now_payable_paid_language'); ?>");	
+								break;
+							case 'unpaid':
+								$(self).html('<?php echo $this->translator->translator("invoice_list_invoice_now_pay"); ?>');
+								$(self).attr('rel', 'paid');
+								$('#now_payable_status').html("<?php echo $this->translator->translator('invoice_list_invoice_now_payable_unpaid_language'); ?>");	
+								break;
+							case 'cancel':
+								$(self).html('<?php echo $this->translator->translator("common_cancel_selected"); ?>');
+								$(self).attr('rel', 'paid');
+								$('#now_payable_status').html("<?php echo $this->translator->translator('invoice_list_invoice_now_unpayable_paid_language'); ?>");	
+								break;
+						}
+					
+					}
+					else
+					{
+						commonMsgDialog(settingObj, json_arr.msg);
+					}									
+				},
+				error: function(xhr, status, error){
+					commonCloseLoaderDialog(settingObj);
+					var msg = "Error! " + xhr.status + " " + error;
+					commonMsgDialog(settingObj, msg);
+				}
+		});			
+		
+	});
+	
+	$('a.send_email_btn').click(function() {
+		var invoice_id = '<?php echo $this->invoice_id; ?>';
+		var email_template_id = $('#email_templates').val();	
+		var self = this;	
+		if(email_template_id == null || email_template_id == '')
+		{
+			commonMsgDialog(settingObj, "<?php echo $this->translator->translator('invoice_send_email_select_email_template');  ?>");
+		}
+		else
+		{			
+			$.ajax({
+				url: "<?php echo $this->url( array('module' => 'Invoice','controller' => 'Backend', 'action'     => 'email' ), 'adminrout',    true) ?>",
+					type: 'POST',
+					data: {invoice_id : invoice_id, email_template_id : email_template_id},
+					beforeSend: function(){						
+							$(self).html('<span class="icon loader"></span>');			
+						 },
+					success: function(response){					
+						
+						var json_arr = eval("("+response+")");
+						
+						if(json_arr.status == 'ok')
+						{
+							commonMsgDialog(settingObj, json_arr.msg);						
+						}
+						else
+						{
+							commonMsgDialog(settingObj, json_arr.msg);
+						}
+						$(self).html('<span class="icon upload"><?php echo $this->translator->translator('invoice_send_email_btn'); ?></span>');
+					},
+					error: function(xhr, status, error){	
+						$(self).html('<span class="icon upload"><?php echo $this->translator->translator('invoice_send_email_btn'); ?></span>');
+						var msg = "Error! " + xhr.status + " " + error;
+						commonMsgDialog(settingObj, json_arr.msg);
+					}
+			});
+		}
+	});
+	
+	$('a.edit_invoice_btn').click(function() {	
+			
+			var formData = commonGetFormData(settingObj.form_action.form_id, settingObj.form_action.hasTinyMCE);
+			formData.invoice_id = '<?php echo $this->invoice_id; ?>';				
+		$.ajax({
+			url: "<?php echo $this->url( array('module' => 'Invoice','controller' => 'members', 'action'     => 'edit' ), 'adminrout',    true) ?>",
+			  	type: 'POST',
+			  	data: formData,
+				beforeSend: function(){						
+						commonRemoveFormError(settingObj);
+						commonOpenLoaderDialog(settingObj);				
+					 },
+				success: function(response){					
+					//alert(response);
+					var json_arr = eval("("+response+")");
+					commonCloseLoaderDialog(settingObj);
+					if(json_arr.status == 'ok')
+					{						
+						$('#actionMessage').html(succMsgDesign(json_arr.msg));						
+					}
+					else if(json_arr.status == 'errV')
+					{
+						$('#actionMessage').html(errMsgDesign("<?php echo $this->translator->translator('common_err'); ?>"));
+												
+						for(var i= 0; i < json_arr.msg.length; i++)
+						{
+							commonAddFormError(json_arr.msg[i].key,json_arr.msg[i].value);
+						}
+					}
+					else
+					{
+						$('#actionMessage').html(errMsgDesign(json_arr.msg));
+					}
+				},
+				error: function(xhr, status, error){
+					commonCloseLoaderDialog(settingObj);
+					var msg = "Error! " + xhr.status + " " + error;
+					$('#actionMessage').html(errMsgDesign(msg));
+				}
+		});
+	});
+});
+
+</script>
+
+<div id="container">
+<?php if (!$this->allow() || ($this->auth->getIdentity()->access_other_user_article != '1' && $this->auth->getIdentity()->user_id != $this->mem_info['user_id'])) : ?>
+	<div class="grid_12 t_a_bottom">
+		<?php echo $this->translator->translator('Member_Access_deny_desc'); ?>
+	</div>
+<?php else : ?>
+
+<div class="title-container">
+	<div class="invoice-list-edit"><h1><?php echo $this->translator->translator('invoice_edit_page_name'); ?></h1></div>
+    
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Invoice','controller' => 'members', 'action'     => 'list' ), 'Members-Invoice-Item-List/*',    true) ?>"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+    </div>
+</div>
+
+<div class="content-container" id="topGo">
+    
+	<form name="formInvoice" id="formInvoice" method="post" action="<?php echo $this->url(); ?>">
+    	<!-- Client Info Srart -->
+        <div class="client-info">
+            <fieldset class="fieldset">
+            <legend class="legend"><?php echo $this->translator->translator('Invoice_details_client_info'); ?></legend>
+            <div>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_first_name_title'); ?>
+                    </div>
+                </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['firstName']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_last_name_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['lastName']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_company_name_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo '&nbsp;'.$this->escape($this->mem_info['companyName']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_email_address_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['username']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_address_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['address']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_postalCode_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['postalCode']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_city_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['city']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_state_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['state']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('Invoice_details_client_country_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $this->escape($this->mem_info['country_name']); ?>
+                    </div>
+                </div>
+                
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('invoice_send_email_total_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <span class="label"><?php echo $currencySymbol.' '.$this->escape($this->invoice_info['total']).' '.$currencyShort; ?></span>
+                    </div>
+                </div>
+                
+                <?php
+					if(!empty($this->invoice_info['tax']))
+					{
+				?>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('invoice_total_tax_title'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $currencySymbol.' '.$this->escape($this->invoice_info['tax']).' '.$currencyShort; ?>
+                    </div>
+                </div>
+                <?php
+					}
+				?>
+                
+                <?php
+				if(!empty($this->invoice_info['service_charge']))
+					{
+				?>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('invoice_send_email_service_charge'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $currencySymbol.' '.$this->escape($this->invoice_info['service_charge']).' '.$currencyShort; ?>
+                    </div>
+                </div>
+                <?php
+					}
+				?>
+                
+                <?php
+				if(!empty($this->invoice_info['deposit_charge']))
+					{
+			  	?>
+                <div class="form-label-container" style="width:40%">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('invoice_send_email_deposit_charge', Settings_Service_Price::getMargine('5')); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <?php echo $currencySymbol.' '.$this->escape($this->invoice_info['deposit_charge']).' '.$currencyShort; ?>
+                    </div>
+                </div>
+                <?php
+					}
+				?>
+                
+               	<?php
+				if(!empty($this->invoice_info['now_payable']))
+					{
+				?>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('invoice_send_email_deposit_payable'); ?>
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <span class="amount-payable">
+						<?php echo $currencySymbol.' '.$this->escape($this->invoice_info['now_payable']).' '.$currencyShort; ?> (<span id="now_payable_status">
+					  	<?php if($this->escape($this->invoice_info['now_payable_paid_status']) == '1'){ echo $this->translator->translator('invoice_list_invoice_now_payable_paid_language'); }else { echo $this->translator->translator('invoice_list_invoice_now_payable_unpaid_language'); }  ?>
+                      	</span>)
+                      	<?php if($this->escape($this->invoice_info['now_payable_paid_status']) != '1'){ ?>
+                      	&nbsp;<a href="javascript:void(0);" id="now_pay" rel="paid" class="btn"><?php echo $this->translator->translator('invoice_list_invoice_now_pay'); ?></a>
+                      	<?php }else{ ?>
+                      	&nbsp;<a href="javascript:void(0);" id="now_pay" rel="unpaid" class="btn"><?php echo $this->translator->translator('common_unpaid_selected'); ?></a>
+                      	<?php } ?>
+                        </span>
+                    </div>
+                </div>
+                
+                <?php
+					$later_payable_visible = ($this->invoice_info['status'] == '2') ? 'display:inline;' : 'display:none;';
+				?>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        &nbsp;
+                    </div>
+                   </div> 
+                        <div class="form-field-container">
+                            <div class="form-field">
+                        <span style="<?php echo $later_payable_visible; ?>" id="later_payable" class="payable-later"><?php echo $this->translator->translator("invoice_send_email_later_payable", $currencySymbol.(($this->invoice_info['total']+$this->invoice_info['tax']+$this->invoice_info['service_charge']) - $this->invoice_info['now_payable']).$currencyShort); ?></span>
+                    </div>
+                </div>
+                <?php							
+					}
+				?>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->translator->translator('invoice_send_email_grand_total'); ?>
+                    </div>
+                 </div> 
+                 <div class="form-field-container">
+                    <div class="form-field">
+                        <span class="label"><?php echo $currencySymbol.' '.($this->invoice_info['total']+$this->invoice_info['tax']+$this->invoice_info['service_charge']).' '.$currencyShort; ?></span>
+                    </div>
+                </div>
+            </div>
+            </fieldset>
+        </div>
+       	<!-- Client Inf End -->
+        
+        <!-- Payment Info Srart -->
+        <div class="payment-info">
+        	<div id="invoice_status"><h1 class="status-<?php echo strtolower(strip_tags($this->invoice_status)); ?>"><?php echo $this->invoice_status; ?></h1></div>
+            <hr />
+            <div class="clr btn-spacer">
+                <div class="left-float"><select name="email_templates" id="email_templates">
+                  <option value=""><?php echo $this->translator->translator('common_select'); ?></option>
+                  <?php
+                foreach($email_templates as $key => $value)
+                {
+                ?>
+                  <option value="<?php echo $key; ?>"><?php echo $this->escape($value); ?></option>
+                  <?php
+                }
+                ?>
+                </select>
+                </div>
+                <span class="select-btn ui-widget-content-1"><a href="javascript: void(0);" class="send_email_btn"><span class="icon upload"><?php echo $this->translator->translator('invoice_send_email_btn'); ?></span></a></span>
+            </div>
+            <hr />
+            <div class="btn-spacer">
+            <?php if ($this->allow('paid','backend','Invoice')) : ?>
+			<span class="paid-btn ui-widget-content-1"><a href="javascript: void(0);" rel="paid" class="publish_all"><span class="icon publish"><?php echo $this->translator->translator('common_paid_selected'); ?></span></a></span> &nbsp;
+            <span class="unpaid-btn ui-widget-content-1"><a href="javascript: void(0);" rel="unpaid" class="publish_all"><span class="icon unpublish"><?php echo $this->translator->translator('common_unpaid_selected'); ?></span></a></span> &nbsp; 
+            <span class="cancel-btn ui-widget-content-1"><a href="javascript: void(0);" rel="cancel" class="publish_all"><span class="icon close"><?php echo $this->translator->translator('common_cancel_selected'); ?></span></a></span>
+            <?php endif; ?>
+            </div>
+       	</div>
+        <!-- Payment Info End -->
+        
+        <div id="generalInfo" class="clr">
+        <fieldset class="fieldset last">
+        	<span class="top-go right-float"><a href="#topGo"><img src="application/modules/Administrator/layouts/scripts/images/tools/top.png" border="0" alt="<?php echo $this->translator->translator('common_go_top_title'); ?>" title="<?php echo $this->translator->translator('common_go_top_title'); ?>" /></a></span>
+            <legend class="legend"><?php echo $this->translator->translator('invoice_general_info'); ?></legend>
+            <div id="actionMessage"></div>
+			<div>
+                <div class="form-label-container">
+                    <div class="label_class">
+                        <?php echo $this->invoiceForm->invoice_subject->getLabel(); if($this->invoiceForm->invoice_subject->isRequired()){ ?><span class="star_class">*</span><?php } ?>
+                    </div>
+                </div> 
+				<div class="form-field-container">
+                    <div class="form-field">
+                        <?php  echo $this->invoiceForm->invoice_subject;  ?>                        
+                        <span class="select-btn ui-widget-content-1"><a href="javascript: void(0);" class="edit_invoice_btn"><span class="icon save"><?php echo $this->translator->translator('invoice_edit_page_save_subject'); ?></span></a></span>
+                    	<div class="input-errors" id="invoice_subject_err"></div>
+                    </div>
+                    <div class="form-field-info">
+                    	<div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->invoiceForm->invoice_subject->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                    </div>
+                </div>
+                
+                <div class="form-label-container" style="width:8%">
+                    <div class="label_class">
+                        <?php echo $this->invoiceForm->invoice_desc->getLabel(); if($this->invoiceForm->invoice_desc->isRequired()){  ?><span class="star_class">*</span><?php } ?>
+                    </div>
+    			</div> 
+				<div class="form-field-container">
+                    <div class="form-field">
+                        <div class="left-float"><?php echo $this->invoiceForm->invoice_desc; ?></div>
+                        <span id="loaderLink"><a href="javascript:void(0);" class="loaderLink_class" rel="wysiwyg,invoice_desc"><img src="application/modules/Administrator/layouts/scripts/images/common/editors.gif" border="0" title="<?php echo $this->translator->translator('common_editor_open'); ?>" alt="<?php echo $this->translator->translator('common_editor_open'); ?>" ></a></span>
+                    	<div class="input-errors" id="invoice_desc_err"></div>
+                    </div>	
+                    <div class="form-field-info">
+                    	<div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->invoiceForm->invoice_desc->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                    </div>
+                </div>         
+       		</div>
+     	</fieldset>
+       	</div>
+	</form>
+    
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Invoice','controller' => 'Backend', 'action'     => 'list' ), 'adminrout',    true) ?>"><span class="icon back"><?php echo $this->translator->translator('common_back'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('common_reset'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="edit_invoice_btn"><span class="icon save"><?php echo $this->translator->translator('invoice_edit_page_save'); ?></span></a></span>
+    </div>
+</div>
+
+<div id="dialog_container" style="display:none" title="<?php echo $this->translator->translator('common_processing_language'); ?>">
+	<div id="progressbar" ></div>	
+</div>
+<div id="msg_dialog" title="<?php echo $this->translator->translator('common_dialog_msg',$this->translator->translator('invoice_send_email_btn')); ?>"></div>
+<div id="dialog-confirm" title="<?php echo $this->translator->translator('common_confirmation',$this->translator->translator('common_delete')); ?>"></div>
+
+<?php endif; ?>	
+</div>
+<script type="text/javascript">
+	openCodeMirror('invoice_desc');
+</script>

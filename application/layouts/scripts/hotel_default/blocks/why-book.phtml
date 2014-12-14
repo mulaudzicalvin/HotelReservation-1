@@ -1,0 +1,39 @@
+<?php
+$translator = Zend_Registry::get('translator');
+$front_template = Zend_Registry::get('front_template'); 
+?>
+
+<div class="block block-why">
+	<div class="block-body">
+    	<h2><?php echo $translator->translator('block_why_book_title','','', $front_template['theme_folder']); ?></h2>
+    	<div class="block-content">
+        	<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/tick.png" width="32">
+			<p><?php echo $translator->translator('block_why_book_sub_title_1','','', $front_template['theme_folder']); ?></p>
+			<?php echo $translator->translator('block_why_book_info_1','','', $front_template['theme_folder']); ?>
+        </div>
+        
+        <div class="block-content">
+        	<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/tick.png" width="32">
+			<p><?php echo $translator->translator('block_why_book_sub_title_2','','', $front_template['theme_folder']); ?></p>
+			<?php echo $translator->translator('block_why_book_info_2','','', $front_template['theme_folder']); ?>
+        </div>
+        
+        <div class="block-content">
+        	<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/tick.png" width="32">
+			<p><?php echo $translator->translator('block_why_book_sub_title_3','','', $front_template['theme_folder']); ?></p>
+			<?php echo $translator->translator('block_why_book_info_3','','', $front_template['theme_folder']); ?>
+        </div>
+        
+        <div class="block-content">
+        	<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/tick.png" width="32">
+			<p><?php echo $translator->translator('block_why_book_sub_title_4','','', $front_template['theme_folder']); ?></p>
+			<?php echo $translator->translator('block_why_book_info_4','','', $front_template['theme_folder']); ?>
+        </div>
+        
+        <div class="block-content">
+        	<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/tick.png" width="32">
+			<p><?php echo $translator->translator('block_why_book_sub_title_5','','', $front_template['theme_folder']); ?></p>
+			<?php echo $translator->translator('block_why_book_info_5','','', $front_template['theme_folder']); ?>
+        </div>
+    </div>
+</div>

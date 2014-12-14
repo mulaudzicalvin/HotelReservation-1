@@ -1,0 +1,55 @@
+<?php
+class mod_hotel_count
+{
+	protected	$_id;
+	protected	$_order = '1';
+	protected	$_DBconn;
+	protected	$_front_template;
+	protected	$_view;
+	protected   $_image_on = '0';
+	protected   $_group = '1';
+	protected 	$translator;
+	
+	public function __construct($view) 
+	{
+		$this->_front_template = Zend_Registry::get('front_template'); 
+		$this->_view =	$view;		
+		//DB Connection
+		$this->_DBconn = Zend_Registry::get('msqli_connection');
+		$this->_DBconn->getConnection();
+		
+		$this->translator = Zend_Registry::get('translator');
+	}
+	
+	public function truncate($phrase,$start_words, $max_words)
+	{
+	   $phrase_array = explode(' ',$phrase);
+	   if(count($phrase_array) > $max_words && $max_words > 0)
+		  $phrase = implode(' ',array_slice($phrase_array, $start_words, $max_words)).'...';  
+	   return $phrase;
+	}
+	
+	public function class_body()
+	{	
+		$group_db = new Hotels_Model_DbTable_HotelsGroup();
+		$hotels_helper = new Hotels_View_Helper_HotelsGroup();
+		$num_hotels = $hotels_helper->getNumOfProduct($this->_group);
+		$num_country = $hotels_helper->getNumOfProductCountry($this->_group);
+	?>
+    
+    <h1><?php echo number_format($num_hotels); ?> <?php echo $this->translator->translator('hotels_front_page_label_world_wide', $num_country , '', $this->_front_template['theme_folder'] ); ?></h1>
+    
+	<?php
+	}
+}
+
+$hotel_count_class = new mod_hotel_count($this);
+try
+{
+	$hotel_count_class->class_body();
+}
+catch(Exception $e)
+{
+	echo $e->getMessage();
+}
+?>

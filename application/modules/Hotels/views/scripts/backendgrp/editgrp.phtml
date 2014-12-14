@@ -1,0 +1,839 @@
+<?php $version = Zend_Registry::get('version'); $tab_base_link = Zend_Controller_Front::getInstance()->getRequest()->getRequestUri(); ?>
+
+<script type="text/javascript">
+$(document).ready(function() {
+	floatingbar('#floatingbar',"#button_top_bar",null);		
+	$("#tabs").tabs().find(".ui-tabs-nav").sortable({axis:'xy'});
+
+	var settingObj = {
+						form_action : {
+										form_id: 'formGroup',
+										hasTinyMCE: false,
+										common_msg_field_id: 'actionMessage',
+										dialog_container_id:	'dialog_container',
+										dialog_progressbar_id:	'progressbar',
+										extra_field_for_reset: [],
+										extra_function_for_reset: function(){},										
+								},					
+					messages: {
+									display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+									empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+									page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+									of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+									itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+									first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+									previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+									next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+									last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+									refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+									
+									common_msg_dialog_id 		:	'dialog_msg',
+									common_confirn_dialog_id	:	'dialog-confirm',
+									common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+									common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+									common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",										
+									common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+									common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+									common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+									common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+									common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>"
+								}
+					};
+	
+	$('a.reset_btn').click(function() {			
+		 commonResetFormFields(settingObj);	
+		 commonRemoveFormError(settingObj);	
+	});
+		
+	$('a.edit_hotels_group_btn').click(function() {			
+			
+		var formData = commonGetFormData(settingObj.form_action.form_id, settingObj.form_action.hasTinyMCE);		
+		formData.id = '<?php echo $this->id; ?>';
+		$.ajax({
+			url: "<?php echo $this->url( array('module' => 'Hotels','controller' => 'Backendgrp', 'action'     => 'editgrp' ), 'adminrout',    true) ?>",
+			  	type: 'POST',
+			  	data: formData,
+				beforeSend: function(){						
+						commonRemoveFormError(settingObj);
+						commonOpenLoaderDialog(settingObj);					
+					 },
+				success: function(response){
+					//alert(response);					
+					var json_arr = eval("("+response+")");					
+					commonCloseLoaderDialog(settingObj);					
+					if(json_arr.status == 'ok')
+					{
+						$('#actionMessage').html(succMsgDesign(json_arr.msg));														
+					}
+					else if(json_arr.status == 'errV')
+					{
+						$('#actionMessage').html(errMsgDesign("<?php echo $this->translator->translator('common_err'); ?>"));
+												
+						for(var i= 0; i < json_arr.msg.length; i++)
+						{
+							commonAddFormError(json_arr.msg[i].key,json_arr.msg[i].value);							
+						}
+						openFirstErrTab(json_arr.msg, 'tabs', 'tabs-');
+					}
+					else
+					{
+						$('#actionMessage').html(errMsgDesign(json_arr.msg));
+					}
+				},
+				error: function(xhr, status, error){
+					commonCloseLoaderDialog(settingObj);
+					var msg = "Error! " + xhr.status + " " + error;
+					$('#actionMessage').html(errMsgDesign(msg));
+				}
+		});
+	});		
+	
+});
+
+
+</script>
+
+<div id="container">
+<?php if (!$this->allow()) : ?>
+	<div class="grid_12 t_a_bottom">
+		<?php echo $this->translator->translator('Member_Access_deny_desc'); ?>
+	</div>
+<?php else : ?>
+
+<div class="title-container">
+	<div class="hotels-group-edit"><h1><?php echo $this->translator->translator('edit_hotels_group'); ?></h1></div>
+    
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'Backendgrp', 'action'     => 'listgrp' ), 'adminrout',    true) ?>"><span class="icon back"><?php echo $this->translator->translator('hotels_back'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('hotels_reset'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="edit_hotels_group_btn"><span class="icon save"><?php echo $this->translator->translator('common_save'); ?></span></a></span>
+    </div>
+</div>
+
+<div class="content-container">
+	<div id="actionMessage"></div>
+	<form name="formGroup" id="formGroup" method="post">
+    	<div id="button_top_bar"></div>
+        <div id="generalInfo">
+        	<div id="tabs">
+            	<ul>
+                    <li><a href="<?php echo $tab_base_link; ?>#tabs-1"><?php echo $this->translator->translator('hotels_general_info'); ?></a></li>
+                    <li><a href="<?php echo $tab_base_link; ?>#tabs-2"><?php echo $this->translator->translator('hotels_category_manage'); ?></a></li>
+                    <li><a href="<?php echo $tab_base_link; ?>#tabs-3"><?php echo $this->translator->translator('hotels_page_manage'); ?></a></li>
+                    <li><a href="<?php echo $tab_base_link; ?>#tabs-4"><?php echo $this->translator->translator('hotels_file_manage'); ?></a></li>
+                </ul>
+                
+                <div id="tabs-1">
+                	<fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_general_info'); ?></legend>
+                        
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->group_name->getLabel();  if($this->hotelsGroupForm->group_name->isRequired()){ ?><span class="required">*</span><?php }  ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->group_name; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->group_name->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="group_name_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->role_id->getLabel();  if($this->hotelsGroupForm->role_id->isRequired()){ ?><span class="required">*</span><?php }  ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->role_id; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->role_id->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="role_id_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->group_type->getLabel();  if($this->hotelsGroupForm->group_type->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->group_type; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->group_type->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="group_type_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->review_id->getLabel(); if($this->hotelsGroupForm->review_id->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->review_id; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->review_id->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="review_id_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->dynamic_form->getLabel(); if($this->hotelsGroupForm->dynamic_form->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->dynamic_form; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->dynamic_form->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="dynamic_form_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->category_on_off->getLabel();  if($this->hotelsGroupForm->category_on_off->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->category_on_off; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->category_on_off->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="category_on_off_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->calendar_on_off->getLabel(); if($this->hotelsGroupForm->calendar_on_off->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->calendar_on_off; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->calendar_on_off->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="calendar_on_off_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->category_panel->getLabel(); if($this->hotelsGroupForm->category_panel->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->category_panel; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->category_panel->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="category_panel_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->horizontal_panel->getLabel(); if($this->hotelsGroupForm->horizontal_panel->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->horizontal_panel; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->horizontal_panel->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="horizontal_panel_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                	<?php echo $this->hotelsGroupForm->num_of_pic_show->getLabel(); if($this->hotelsGroupForm->num_of_pic_show->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->num_of_pic_show; ?>&nbsp;<?php echo $this->translator->translator('zero_pic_show'); ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->num_of_pic_show->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="num_of_pic_show_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+                 	</fieldset>
+                    
+                    <fieldset class="fieldset last">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_general_meta_info'); ?></legend>
+                        
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php  echo $this->hotelsGroupForm->meta_title->getLabel(); if($this->hotelsGroupForm->meta_title->isRequired()){ ?><span class="required">*</span><?php }  ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->meta_title; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->meta_title->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="meta_title_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->meta_keywords->getLabel(); if($this->hotelsGroupForm->meta_keywords->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->meta_keywords; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->meta_keywords->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="meta_keywords_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->meta_desc->getLabel(); if($this->hotelsGroupForm->meta_desc->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->meta_desc; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->meta_desc->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="news_desc_truncate_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+                  	</fieldset>    
+             	</div>
+                
+                <div id="tabs-2">
+                	<fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_general_category_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->cat_num_per_page->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->cat_num_per_page; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->cat_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="cat_num_per_page_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->cat_col_num->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->cat_col_num; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="cat_col_num_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->cat_sort->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->cat_sort; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->cat_sort->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="cat_sort_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->cat_order->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->cat_order; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->cat_order->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="cat_order_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+               		</fieldset>
+                    
+                    <fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_latest_category_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_on->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_on; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_cat_on->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_cat_on_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_num_per_page->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_num_per_page; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_cat_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_cat_num_per_page_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_sort->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_sort; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_cat_sort->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_cat_sort_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_order->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_cat_order; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_cat_order->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_cat_order_err"></div>
+                                </div>
+                            </div>
+                      	</div>
+                	</fieldset>
+                    
+                    <fieldset class="fieldset last">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_featured_category_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_on->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_on; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->fearured_cat_on->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="fearured_cat_on_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_num_per_page->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_num_per_page; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="fearured_cat_num_per_page_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_sort->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_sort; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->fearured_cat_sort->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="fearured_cat_sort_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_order->getLabel(); if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->fearured_cat_order; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->fearured_cat_order->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="fearured_cat_order_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+                	</fieldset>   
+                </div>
+                
+                <div id="tabs-3">
+                	<fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_general_page_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_num_per_page->getLabel();  if($this->hotelsGroupForm->file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_num_per_page; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_num_per_page_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_col_num->getLabel();  if($this->hotelsGroupForm->file_col_num->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_col_num; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_col_num->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_col_num_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_sort->getLabel();  if($this->hotelsGroupForm->file_sort->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_sort; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_sort->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_sort_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_order->getLabel();  if($this->hotelsGroupForm->file_order->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_order; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_order->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_order_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->light_box_on->getLabel(); if($this->hotelsGroupForm->light_box_on->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->light_box_on; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->light_box_on->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="light_box_on_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+                	</fieldset>
+                    
+                    <fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_latest_page_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_file_on->getLabel();  if($this->hotelsGroupForm->latest_file_on->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_file_on; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_file_on->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_file_on_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_file_num_per_page->getLabel();  if($this->hotelsGroupForm->latest_file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_file_num_per_page; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_file_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_file_num_per_page_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_file_sort->getLabel();  if($this->hotelsGroupForm->latest_file_sort->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_file_sort; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_file_sort->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_file_sort_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->latest_file_order->getLabel();  if($this->hotelsGroupForm->latest_file_order->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->latest_file_order; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->latest_file_order->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="latest_file_order_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+                	</fieldset>
+                    
+                    <fieldset class="fieldset last">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_featured_page_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->featured_file_on->getLabel();  if($this->hotelsGroupForm->featured_file_on->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->featured_file_on; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->featured_file_on->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="featured_file_on_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->featured_file_num_per_page->getLabel();  if($this->hotelsGroupForm->featured_file_num_per_page->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->featured_file_num_per_page; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->featured_file_num_per_page->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="featured_file_num_per_page_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->featured_file_sort->getLabel();  if($this->hotelsGroupForm->featured_file_sort->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->featured_file_sort; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->featured_file_sort->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="featured_file_sort_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->featured_file_order->getLabel();  if($this->hotelsGroupForm->featured_file_order->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->featured_file_order; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->featured_file_order->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="featured_file_order_err"></div>
+                                </div>
+                            </div>
+                     	</div>
+                 	</fieldset>    
+                </div>
+                
+                <div id="tabs-4">
+                	<fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_general_file_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_type->getLabel();  if($this->hotelsGroupForm->file_type->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_type; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_type->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_type_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_size_max->getLabel();  if($this->hotelsGroupForm->file_size_max->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_size_max; ?>&nbsp;<?php echo $this->translator->translator('zero_file_size'); ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_size_max->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_size_max_err"></div>
+                                </div>
+                            </div>
+                    	</div>
+                	</fieldset>
+                    
+                    <fieldset class="fieldset">
+                		<legend class="legend"><?php echo $this->translator->translator('hotels_thumb_info'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_cat_thumb_width->getLabel();  if($this->hotelsGroupForm->file_cat_thumb_width->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_cat_thumb_width; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_cat_thumb_width->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_cat_thumb_width_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_cat_thumb_height->getLabel();  if($this->hotelsGroupForm->file_cat_thumb_height->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_cat_thumb_height; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_cat_thumb_height->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_cat_thumb_height_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_cat_thumb_resize_func->getLabel();  if($this->hotelsGroupForm->file_cat_thumb_resize_func->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_cat_thumb_resize_func; ?> 
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_cat_thumb_resize_func->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_cat_thumb_resize_func_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_thumb_width->getLabel();  if($this->hotelsGroupForm->file_thumb_width->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_thumb_width; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_thumb_width->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_thumb_width_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_thumb_height->getLabel();  if($this->hotelsGroupForm->file_thumb_height->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_thumb_height; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_thumb_height->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_thumb_height_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_thumb_resize_func->getLabel();  if($this->hotelsGroupForm->file_thumb_resize_func->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_thumb_resize_func; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_thumb_resize_func->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_thumb_resize_func_err"></div>
+                                </div>
+                            </div>
+                      	</div>
+                	</fieldset>
+                    
+                    <fieldset class="fieldset last">
+                		<legend class="legend"><?php echo $this->translator->translator('only_for_image'); ?></legend>
+                       	<div class="form">
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->img_big_width->getLabel();  if($this->hotelsGroupForm->img_big_width->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->img_big_width; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->img_big_width->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="img_big_width_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->img_big_height->getLabel();  if($this->hotelsGroupForm->img_big_height->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->img_big_height; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->img_big_height->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="img_big_height_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->img_big_resize_func->getLabel();  if($this->hotelsGroupForm->img_big_resize_func->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                   <?php echo $this->hotelsGroupForm->img_big_resize_func; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->img_big_resize_func->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="img_big_resize_func_err"></div>
+                                </div>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_path_room_type_image->getLabel(); if($this->hotelsGroupForm->file_path_room_type_image->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_path_room_type_image; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_path_room_type_image->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_path_room_type_image_err"></div>
+                                </div>
+                          	</div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_path_hotels_image->getLabel(); if($this->hotelsGroupForm->file_path_hotels_image->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_path_hotels_image; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_path_hotels_image->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_path_hotels_image_err"></div>
+                                </div>
+                          	</div>
+                            
+                            <div class="form-row">
+                                <div class="label">
+                                    <?php echo $this->hotelsGroupForm->file_path_feature_interior_plan_image->getLabel(); if($this->hotelsGroupForm->file_path_feature_interior_plan_image->isRequired()){ ?><span class="required">*</span><?php } ?>
+                                </div>
+                                
+                                <div class="field">
+                                    <?php echo $this->hotelsGroupForm->file_path_feature_interior_plan_image; ?>
+                                    <div class="ui-widget ui-helper-clearfix info"><div class="ui-widget-header ui-corner-all ui-state-default" title="<?php echo $this->escape($this->hotelsGroupForm->file_path_feature_interior_plan_image->getAttrib('title')); ?>"><p><span class="ui-icon ui-icon-info"></span></p></div></div>
+                                    <div class="input-errors" id="file_path_feature_interior_plan_image_err"></div>
+                                </div>
+                          	</div>
+                    	</div>
+               		</fieldset>
+                </div>          
+          	</div>
+		</div>
+	</form>
+      
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'Backendgrp', 'action'     => 'listgrp' ), 'adminrout',    true) ?>"><span class="icon back"><?php echo $this->translator->translator('hotels_back'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('hotels_reset'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="edit_hotels_group_btn"><span class="icon save"><?php echo $this->translator->translator('common_save'); ?></span></a></span>
+    </div>
+</div>
+
+<div id="floatingbar">
+	<h1><?php echo $this->translator->translator('edit_hotels_group'); ?></h1>
+    
+    <div class="button-container">
+        <span class="button ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'Backendgrp', 'action'     => 'listgrp' ), 'adminrout',    true) ?>"><span class="icon back"><?php echo $this->translator->translator('hotels_back'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript:  void(0);" class="reset_btn"><span class="icon reset"><?php echo $this->translator->translator('hotels_reset'); ?></span></a></span>
+        <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="edit_hotels_group_btn"><span class="icon save"><?php echo $this->translator->translator('common_save'); ?></span></a></span>
+    </div>
+</div>
+<?php endif; ?>	
+
+<div id="dialog_container" style="display:none" title="<?php echo $this->translator->translator('common_processing_language'); ?>">
+	<div id="progressbar" ></div>	
+</div>
+</div>

@@ -1,0 +1,39 @@
+<?php
+$translator = Zend_Registry::get('translator');
+$front_template = Zend_Registry::get('front_template'); 
+?>
+
+<div class="block block-biztype">
+	<div class="block-body">
+    	<h2><?php echo $translator->translator('block_biz_type_title','','', $front_template['theme_folder']); ?></h2>
+        <a href="Hotel-List-Type/type/1" class="apt">
+        	<div class="icon-nav">
+       			<p><?php echo $translator->translator('block_biz_type_apt','','', $front_template['theme_folder']); ?></p>
+        	</div>
+		</a>
+        
+        <a href="Hotel-List-Type/type/4" class="motel">
+        	<div class="icon-nav">
+            	<p><?php echo $translator->translator('block_biz_type_motel','','', $front_template['theme_folder']); ?></p>
+        	</div>
+        </a>
+        
+        <a href="Hotel-List-Type/type/5" class="residence">
+        	<div class="icon-nav">
+            	<p><?php echo $translator->translator('block_biz_type_residence','','', $front_template['theme_folder']); ?></p>
+        	</div>
+		</a>
+        
+        <a href="Hotel-List-Type/type/6" class="resort">
+        	<div class="icon-nav">
+            	<p><?php echo $translator->translator('block_biz_type_resort','','', $front_template['theme_folder']); ?></p>
+            </div>
+		</a>
+        
+        <a href="Hotel-List-Type/type/7" class="convention">
+        	<div class="icon-nav">
+            	<p><?php echo $translator->translator('block_biz_type_convention','','', $front_template['theme_folder']); ?></p>
+        	</div>
+		</a>
+	</div>      
+</div>

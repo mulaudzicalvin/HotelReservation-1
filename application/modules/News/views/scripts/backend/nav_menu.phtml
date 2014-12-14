@@ -1,0 +1,56 @@
+<?php
+$frontController = Zend_Controller_Front::getInstance();	
+$getController = $frontController->getRequest()->getControllerName();
+$getAction = $frontController->getRequest()->getActionName();
+$param_group_id = $frontController->getRequest()->getParam('group_id');
+$translator = Zend_Registry::get('translator'); 
+?>
+
+<div id="nav">
+    <div class="nav-header"><div class="nav-title"><?php if(!empty($param_group_id)){ $group_Info = new News_Model_DbTable_NewsGroup(); $group_name = $group_Info->getGroupName($param_group_id); echo $this->escape($group_name['news_name']);  }else{ echo $translator->translator('news_menu_title'); } ?></div></div>
+    <div class="nav-body">
+    	<ul> 
+        	<?php if ($this->allow('add','backendpro','News')) : ?>
+            <li <?php if($getAction == 'add' && strtolower($getController) == 'backendpro'){ ?> class="news-content-add selected"<?php }else{ ?>class="news-content-add"<?php } ?>>
+				<a href="<?php echo $this->url( array('module'=> 'News', 'controller' => 'backendpro', 'action'     => 'add', 'group_id' => $param_group_id ), 'adminrout',    true) ?>"><?php if(!empty($param_group_id)){ echo $translator->translator('news_menu3-3').' '.$this->escape($group_name['news_name']); }else{ echo $translator->translator('news_menu3-3-3'); } ?></a>
+            </li>
+            <?php endif; ?>
+                      
+            <?php if ($this->allow('list','backendpro','News')) : ?>
+            <li <?php if($getAction == 'list' && strtolower($getController) == 'backendpro'){ ?> class="news-content selected"<?php }else{ ?>class="news-content"<?php } ?>>
+				<a href="<?php echo $this->url( array('module'=> 'News', 'controller' => 'backendpro', 'action'     => 'list', 'group_id' => $param_group_id ), 'adminrout',    true) ?>"><?php if(!empty($param_group_id)){ echo $translator->translator('admin_menu_manage').' '.$this->escape($group_name['news_name']); }else{ echo $translator->translator('news_menu3'); } ?></a>
+            </li>
+            <?php endif; ?>
+            
+            <?php if ($this->allow('add','backend','News')) : ?>
+            <li <?php if($getAction == 'add' && strtolower($getController) == 'backend'){ ?> class="cat-add selected"<?php }else{ ?>class="cat-add"<?php } ?>>
+            	<a href="<?php echo $this->url(array('module' => 'News','controller'=>'backend', 'action'=>'add', 'group_id' => $param_group_id),'adminrout',true);?>"><?php echo $translator->translator('news_menu2-2'); ?></a>
+           	</li>
+            <?php endif; ?>
+            
+            <?php if ($this->allow('list','backend','News')) : ?>
+            <li <?php if($getAction == 'list' && strtolower($getController) == 'backend'){ ?> class="news-cat selected"<?php }else{ ?>class="news-cat"<?php } ?>>
+            	<a href="<?php echo $this->url(array('module' => 'News','controller'=>'backend', 'action'=>'list', 'group_id' => $param_group_id),'adminrout',true);?>"><?php echo $translator->translator('news_menu2'); ?></a>
+           	</li>
+            <?php endif; ?>
+            
+        	<?php if ($this->allow('addgrp','backendgrp','News')) : ?>
+        	<li <?php if($getAction == 'addgrp' && strtolower($getController) == 'backendgrp'){ ?> class="news-group-add selected"<?php }else{ ?>class="news-group-add"<?php } ?>>
+            	<a href="<?php echo $this->url(array('module' => 'News','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true);?>" ><?php echo $translator->translator('news_menu1-1'); ?></a>
+            </li>
+            <?php endif; ?>
+            
+        	<?php if ($this->allow('listgrp','backendgrp','News')) : ?>
+        	<li <?php if($getAction == 'listgrp' && strtolower($getController) == 'backendgrp'){ ?> class="news-group selected <?php if(empty($param_group_id)){ ?>last<?php } ?>"<?php }else{ ?>class="news-group  <?php if(empty($param_group_id)){ ?>last<?php } ?>"<?php } ?>>
+            	<a href="<?php echo $this->url(array('module' => 'News','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true);?>" ><?php echo $translator->translator('news_menu1'); ?></a>
+            </li>
+            <?php endif; ?>
+            
+        	<?php if (!empty($param_group_id) && $this->allow('editgrp','backendgrp','News')) : ?>
+        	<li <?php if($getAction == 'editgrp' && strtolower($getController) == 'backendgrp'){ ?> class="preference selected last"<?php }else{ ?>class="preference last"<?php } ?>>
+            	<a href="<?php echo $this->url(array('module' => 'News','controller'=>'backendgrp', 'action'=>'editgrp', 'id' => $param_group_id),'adminrout',true);?>" ><?php echo $this->escape($group_name['news_name']).' '.$translator->translator('news_menu_preference'); ?></a>
+            </li>
+            <?php endif; ?>
+        </ul>
+	</div>
+</div>

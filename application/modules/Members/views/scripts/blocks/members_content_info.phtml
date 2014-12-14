@@ -1,0 +1,36 @@
+<?php 
+$front_template = Zend_Registry::get('front_template'); 
+$translator = Zend_Registry::get('translator');
+$auth = Zend_Auth::getInstance();
+$redirect_msg = $translator->translator("member_loggin_redirecting", '', 'Members');
+?>
+<script type="text/javascript">
+
+$(document).ready(function() {	
+	logOut('a.logout_btn', '<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/loader/ajax-loader-email.gif" />', '<?php echo $redirect_msg; ?>', '');
+});
+</script>
+<div class="block-my-account">
+	<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_img/avatar.png" border="0" width="70" class="avatar"/>
+    <?php
+	if ($auth->hasIdentity ())
+	{
+		$globalIdentity = $auth->getIdentity ();
+		$user_full_name	=	$this->escape($globalIdentity->title.' '.$globalIdentity->firstName.' '.$globalIdentity->lastName);
+	?>
+    <div class="info">
+        <p><strong><?php echo $user_full_name; ?></strong>&nbsp;&nbsp;<a href="javascript: void(0)" class="logout_btn"><b>( <?php echo $translator->translator('admin_header_logout_link', '', 'Administrator'); ?> )</b></a><br />
+        <p><span><?php echo $translator->translator('dashboard_profile_username', '', 'Administrator'); ?></span> <?php echo $globalIdentity->username; ?></p>
+        <p><span><?php echo $translator->translator('dashboard_profile_email', '', 'Administrator'); ?></span> <?php echo $globalIdentity->username; ?></p>
+        <p><span><?php echo $translator->translator('dashboard_profile_last_login', '', 'Administrator'); ?></span> <?php echo $this->numbers(strftime("%A, %B %d, %Y %I:%M %p",strtotime($globalIdentity->last_access))); ?></p>
+    </div>
+    
+    <div class="calendar">
+        <div class="month"><?php echo date('M'); ?></div>
+        <h1><?php echo $this->numbers(date('d')); ?></h1>
+        <div class="year"><?php echo $this->numbers(date('Y')); ?></div>
+    </div>
+    <?php
+	}
+	?>
+</div>

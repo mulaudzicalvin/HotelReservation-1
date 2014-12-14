@@ -1,0 +1,230 @@
+<?php
+class mod_hotels_search
+{
+	protected	$_group = 1;
+	protected	$_active =	1;
+	protected	$_front_template;
+	protected	$_group_name="Hotel";
+	protected	$_translator;
+	protected	$_view;
+	protected	$postValue;
+	
+	public function __construct($view) 
+	{
+		$this->_front_template = Zend_Registry::get('front_template'); 
+		$this->_view =	$view;	
+		$this->_translator = Zend_Registry::get('translator');	
+		$frontController = Zend_Controller_Front::getInstance();
+		$this->postValue = ($frontController->getRequest()->isPost() && $frontController->getRequest()->getPost(Eicra_File_Constants::HOTELS_CHECK_IN) && $frontController->getRequest()->getPost(Eicra_File_Constants::HOTELS_CHECK_OUT)) ? $frontController->getRequest()->getPost() : Eicra_Global_Variable::getSession()->hotel_search_info;
+		
+	}
+	
+	public function class_body()
+	{
+		$version = new Eicra_License_Version();		
+		$group_db = new Hotels_Model_DbTable_HotelsGroup();
+		$global_conf = Zend_Registry::get('global_conf');
+		$currency = new Zend_Currency($global_conf['default_locale']);	
+		
+		
+		/*$mileage_info = $hotels_db->getMileage();
+		$brand_info = $brand_db->getAllBrand();		
+		$model_info = $hotels_db->getFrontendModels();
+		$price_info = $hotels_db->getPrice('ASC');
+		$price_info_max = $hotels_db->getPrice('DESC');
+		$fuel_info = $hotels_db->getFuelType();
+		$ExteriorColor = $hotels_db->getExteriorColor();
+		$doorsInfo = $hotels_db->getDoors();
+		$bodystyle_info = $hotels_db->getBodyStyle();
+		$driveInfo = $hotels_db->getDriveType();
+		$engine_info = $hotels_db->getEngineSize();
+		$transmissionInfo = $hotels_db->getTransmission();*/
+?>
+
+<script type="text/javascript">
+$(function() {
+	cityAutoSuggBlock();
+	calender_block('check_in', 'check_out');
+	calender_block('check_out', 'check_in');
+	$('a.clear_search').click(function() {		
+		$.each($('#formBlockAdvanceSearch').serializeArray(), function(i, field) {					
+			$('input[name="'+field.name+'"]').val('');		
+			$('select[name="'+field.name+'"]').val('');		
+		});	
+	});	
+});
+function calender_block(id,second_id)
+{
+	$("#"+id).datepicker({
+		showOn: 'button',
+		buttonImage: 'application/layouts/scripts/<?php echo $this->_front_template['theme_folder']; ?>/images/mod_hotel_img/calendar.png',
+		buttonImageOnly: true,		
+		monthNamesShort:<?php echo $this->_translator->translator("common_calender_monthNamesShort"); ?>,
+		monthNames:<?php echo $this->_translator->translator("common_calender_monthNames"); ?>,
+		dayNamesMin:<?php echo $this->_translator->translator("common_calender_dayNamesMin"); ?>,
+		showAnim: 'slide',
+		buttonText: 'Calender',
+		dateFormat:'yy-mm-dd',
+		autoSize:false,
+		showButtonPanel:false,
+		changeMonth: true,
+		changeYear: true,
+		onSelect: function(dateText, inst) {
+			var id_type_arr = id.split('_');
+			var true_id = 		id_type_arr[0] + id_type_arr[1];			
+			var currentTime = new Date();
+			var currentDay = (currentTime.getDate() < 10) ? '0' + currentTime.getDate() : currentTime.getDate();
+			var currentMonth = ((currentTime.getMonth() + 1) < 10) ? '0' + (currentTime.getMonth() + 1) : (currentTime.getMonth() + 1);
+			var today = currentTime.getFullYear() + '-' + currentMonth + '-' + currentDay;				
+			if(true_id == 'checkin')
+			{
+				if( (dateText != '') && ( (toTimestamp_block(dateText) >= toTimestamp_block($('#'+second_id).val())) || (toTimestamp_block(dateText) < toTimestamp_block(today)) )  )
+				{					
+					var msg = "<?php echo $this->_translator->translator('hotels_front_page_checkin_date_err','', '', $this->_front_template['theme_folder']); ?>";
+					openMsgDialog_block(msg);					
+					$('#'+id).val('');
+				}
+				if(!is_30dayDiff_block(dateText, $('#'+second_id).val()))
+				{
+					var msg = "<?php echo $this->_translator->translator('hotels_front_page_date_difference_err','', '', $this->_front_template['theme_folder']); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+			}
+			else if(true_id == 'checkout')
+			{
+				if( (dateText != '') && ( (toTimestamp_block(dateText) <= toTimestamp_block($('#'+second_id).val())) || (toTimestamp_block(dateText) < toTimestamp_block(today)) )  )
+				{
+					var msg = "<?php echo $this->_translator->translator('hotels_front_page_checkout_date_err','', '', $this->_front_template['theme_folder']); ?>";
+					openMsgDialog_block(msg);
+					$('#'+id).val('');
+				}
+				if(!is_30dayDiff_block($('#'+second_id).val(), dateText))
+				{
+					var msg = "<?php echo $this->_translator->translator('hotels_front_page_date_difference_err','', '', $this->_front_template['theme_folder']); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+			}
+		}
+	});
+	$("img[class='ui-datepicker-trigger']").each(function(){ 
+			$(this).attr('style', '');
+		 });
+}
+
+function toTimestamp_block(strDate){
+	 var datum = Date.parse(strDate);
+	 return datum/1000;
+}
+
+function is_30dayDiff_block(checkin, checkout)
+{
+	if(checkin != '' && checkout != '')
+	{
+		var checkin_arr = checkin.split('-');
+		var checkout_arr = checkout.split('-');
+		var checkin_obj =new Date(checkin_arr[0], (checkin_arr[1] - 1), checkin_arr[2]);
+		var checkout_obj =new Date(checkout_arr[0], (checkout_arr[1] - 1), checkout_arr[2]);		
+		var one_day=1000*60*60*24;
+		var diff = Math.ceil((checkout_obj.getTime()-checkin_obj.getTime())/(one_day));	
+		if(diff > 30)
+		{
+			return false;
+		}	
+	}
+	return true;	
+}
+
+function openMsgDialog_block(msg)
+{
+$('#dialog_container_block').html(msg).dialog({
+			autoOpen: true,
+			modal: false,
+			show: 'explode',
+			resizable: 'false',				
+			buttons: { "<?php echo html_entity_decode($this->_translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>": function() { $(this).dialog('option', 'hide', 'explode').dialog("close"); } },
+			open: function(event, ui)
+				 {
+					setTimeout(function() 
+					{									
+						if($('#' + event.target.id).dialog('isOpen'))
+						{
+							//$('#' + event.target.id).dialog('option', 'hide', 'explode').dialog('close');										
+						}
+					}, 10000);
+				  }
+		});
+}
+
+function cityAutoSuggBlock()
+{
+	autoSuggestion('location_for_search_block', "<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'frontend', 'action'     => 'searchname' ), 'adminrout',    true) ?>", {'location_for_search': ''}, ['hotels_primary_image', 'hotels_image', 'hotels_name', 'location_for_search', 'owner_name', 'hotels_location'], 'data/frontImages/hotels/hotels_image', 2);
+}
+</script>
+<div class="block-search">
+    <div class="block-content">
+    <div id="dialog_container_block" title="<?php echo $this->_translator->translator('common_dialog_msg',$this->_translator->translator('hotels_front_page_dialog_name','', '', $this->_front_template['theme_folder'])); ?>"></div>
+    <form name="formBlockAdvanceSearch" id="formBlockAdvanceSearch" method="post" action="<?php echo $this->_view->url( array('module' => 'Hotels', 'controller' => 'search', 'action'     => 'items' ), 'Search-Hotels',    true); ?>">
+		<h1><?php echo $this->_translator->translator('hotels_block_simple_search_title','', '', $this->_front_template['theme_folder']); ?></h1>
+        <div class="col">
+		<p><?php echo $this->_translator->translator('hotels_list_page_search_group','', '', $this->_front_template['theme_folder']); ?></p>
+		<select name="group_id_=" id="group_id">
+            <?php
+            $group_list = $group_db->getGroupInfo();
+			if($group_list)
+            {
+				foreach($group_list as $key => $value)
+				{
+						$selected = ($this->postValue['group_id_='] == $key) ? 'selected=""selected' : '';
+						$this->_group	= ($this->postValue['group_id_='] == $key) ? $this->postValue['group_id_='] : $this->_group;
+						$this->_group_name = ($this->postValue['group_id_='] == $key) ? $value : $this->_group_name;
+				?>
+					<option value="<?php echo $key; ?>" <?php echo $selected; ?>><?php echo $this->_view->escape($value); ?></option>
+				<?php	
+				}
+			}
+            ?>
+		</select>
+        </div>
+        <div class="col clear">
+			<p><?php echo $this->_translator->translator('hotels_block_simple_search_label_city','', '', $this->_front_template['theme_folder']); ?></p>
+       		<input name="location_for_search_LIKE" type="text" id="location_for_search_block"  value="<?php if(!empty($this->postValue['location_for_search_LIKE'])){ echo $this->postValue['location_for_search_LIKE']; }else{ echo 'Any'; } ?>" class="city"/>
+     	</div>
+        
+     	<div class="col clear">
+       		<input type="hidden" name="active_=" id="active" value="<?php echo $this->_active; ?>" />
+           	<p><?php echo $this->_translator->translator('hotels_block_simple_search_label_check_in','', '', $this->_front_template['theme_folder']); ?></p>
+          	<input name="<?php echo Eicra_File_Constants::HOTELS_CHECK_IN; ?>" type="text" id="check_in" size="8" value="<?php if(!empty($this->postValue[Eicra_File_Constants::HOTELS_CHECK_IN])){ echo $this->postValue[Eicra_File_Constants::HOTELS_CHECK_IN]; } ?>" />
+		</div>
+        
+		<div class="col">
+			<p><?php echo $this->_translator->translator('hotels_block_simple_search_label_check_out','', '', $this->_front_template['theme_folder']); ?></p>
+          	<input name="<?php echo Eicra_File_Constants::HOTELS_CHECK_OUT; ?>" type="text" id="check_out" size="8" value="<?php if(!empty($this->postValue[Eicra_File_Constants::HOTELS_CHECK_OUT])){ echo $this->postValue[Eicra_File_Constants::HOTELS_CHECK_OUT]; } ?>" />
+		</div>
+        
+        <div class="clear">
+        <input type="submit" name="button" id="button" value="<?php echo $this->_translator->translator('hotels_block_simple_search_label_btn','', '', $this->_front_template['theme_folder']); ?>" class="hotels-banner-search-btn"><br />
+        </div>
+        
+        <div class="clear">
+            <a href="Search-Hotels"><?php echo $this->_translator->translator('hotels_front_page_advanced_search',$this->_group_name, '', $this->_front_template['theme_folder']); ?></a> &nbsp;&nbsp;&nbsp;
+            <a href="All-Hotels/<?php echo $this->_group; ?>"><?php echo $this->_translator->translator('hotels_block_view_all_link',$this->_group_name, '', $this->_front_template['theme_folder']); ?></a>
+        </div>
+	</form>
+    </div>
+</div>
+<?php
+	}
+}
+	
+	try
+	{
+		$advanced_search_class = new mod_hotels_search($this);
+		$advanced_search_class->class_body();
+	}
+	catch(Exception $e)
+	{
+		echo $e->getMessage();
+	}	
+?>

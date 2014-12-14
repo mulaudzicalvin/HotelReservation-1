@@ -1,0 +1,336 @@
+<?php if (!$this->allow()) : ?>
+		<h1><?php echo $this->translator->translator('Member_Access_deny_desc'); ?></h1>
+<?php else :
+$headTitle = (!empty($this->group_id)) ? $this->translator->translator('gallery_frontend_list_page_name') . ' ('.$this->escape($this->group_info['gallery_name']).')' : $this->translator->translator('gallery_frontend_list_page_name');
+$this->headTitle()->headTitle($headTitle,'SET'); 
+$locale_direction = Eicra_Global_Variable::getSession()->site_direction;
+$locale = Eicra_Global_Variable::getSession()->sess_lang;
+$permission_arr = array('add_enable' => $this->allow('add','members','Gallery'), 'edit_enable' => $this->allow('edit','members','Gallery'), 'publish_enable' => $this->allow('publish','backendpro','Gallery'), 'delete_enable' => $this->allow('delete','backendpro','Gallery'), 'featured_enable' => $this->allow('featured','backendpro','Gallery'));	
+$param_group_id = ($this->group_id) ? $this->group_id : null;
+$add_page_route = ($this->group_id) ? 'Members-Gallery-Item-List-Add/:group_id' : 'Members-Gallery-Item-List-Add';
+?>
+<script type="text/javascript">
+$(document).ready(function() {	
+	var settingObj = {
+						grid_id : 'grid',
+						dest_url : "<?php echo $this->url(); ?>",
+						pageSize : '<?php echo Eicra_Global_Variable::getSession()->viewPageNum; ?>',
+						page: '<?php echo ($this->posted_data['page']) ? $this->posted_data['page'] : ''; ?>',	
+						calendar: {
+							culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+							value: ''
+						},					
+						search_action: {
+							search_form_id : 'searchForm',
+							search_form_btn : 'search_btn',
+							hasTinyMCE 	: false
+						},
+						common_action : {
+								permission_arr : {
+										publish_enable 	: 	'<?php echo $permission_arr['publish_enable']; ?>',
+										delete_enable	:	'<?php echo $permission_arr['delete_enable']; ?>',
+										featured_enable	:	'<?php echo $permission_arr['featured_enable']; ?>'
+								},
+								publish_dest_url			:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'publish' ), 'adminrout',    true); ?>",
+								publish_dest_data_field 	: 	['id', 'product_name', 'paction'],
+								publish_active_icon_link	:	"application/modules/Administrator/layouts/scripts/images/tools/published.gif",
+								publish_deactive_icon_link	:	"application/modules/Administrator/layouts/scripts/images/tools/unpublished.gif",
+								
+								delete_dest_url				:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'delete' ), 'adminrout',    true); ?>",
+								delete_dest_data_field 		: 	['id', 'group_id'],
+																
+								publish_multi_dest_url		:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'publishall' ), 'adminrout',    true); ?>",
+								delete_multi_dest_url		:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'deleteall' ), 'adminrout',    true); ?>",
+								
+								toolbar_button_loader		:	'<span class="icon loader"></span>',
+								ajax_loader_link			:	"application/modules/Administrator/layouts/scripts/images/loader/ajax_loader.gif",
+						
+								multi_action	: [
+														{
+															multi_action_caller_id				:	"a.featured_btn",
+															multi_action_dest_url				:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'featured' ), 'adminrout',    true) ?>",
+															multi_action_dest_data_field 		: 	['id', 'product_name', 'paction'],
+															multi_action_data_return_field 		: 	['featured'],
+															multi_action_data_permission_field 	: 	['featured_enable'],
+															multi_action_dest_data_paction 		: 	[
+																										{'paction' : 'featured', 'title' : "<?php echo html_entity_decode($this->translator->translator("common_feature_title"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "application/modules/Administrator/layouts/scripts/images/tools/unfeatured.gif"},
+																										{'paction' : 'unfeatured', 'title' : "<?php echo html_entity_decode($this->translator->translator("common_unfeature_title"), ENT_QUOTES, 'UTF-8'); ?>", "icon_link" : "application/modules/Administrator/layouts/scripts/images/tools/featured.gif"}
+																									]															
+														}
+													]
+						},
+						order_action: {
+								order_dest_data_field		:	['id', 'product_order'],
+								
+								order_up_dest_url			:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'up' ), 'adminrout',    true) ?>",
+								order_up_ajax_loader_link	:	"application/modules/Administrator/layouts/scripts/images/tools/up-animation.gif",
+								order_down_dest_url			:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'down' ), 'adminrout',    true) ?>",
+								order_down_ajax_loader_link	:	"application/modules/Administrator/layouts/scripts/images/tools/down-animation.gif",
+								
+								order_all_dest_data_field	:	['id_arr', 'product_order_arr'],
+								order_all_dest_url			:	"<?php echo $this->url( array('module'=> 'Gallery', 'controller' => 'backendpro', 'action'     => 'orderall' ), 'adminrout',    true) ?>",
+								order_all_ajax_loader_link	:	"application/modules/Administrator/layouts/scripts/images/loader/order_all_loader.gif"
+						},
+						search_data : {},
+						batch:		false,
+						editable:	false,
+						scrollable: true,
+						detailInit:	false,
+						dataBound: function(e) {									
+								var self = this;		
+																							
+								self.tbody.find("tr").children('td:nth-child(4)').css({'overflow' : 'visible'});
+								commonImageThumbnil();
+																
+								<?php if($this->auth->getIdentity()->allow_change_order_listing == '1') : ?>
+								self.thead.find("th[data-field='product_order']").unbind('click');
+								self.thead.find("th[data-field='product_order']>a").attr('href', 'javascript:void(0)');
+								<?php endif; ?>								                      
+                        },
+						filterable:{
+						  extra: true,
+						  messages: {
+							  info: "<?php echo $this->translator->translator("portfolio_filter_messages_info", '', 'Portfolio'); ?>", // sets the text on top of the filter menu
+							  filter: "<?php echo $this->translator->translator("portfolio_filter_messages_filter", '', 'Portfolio'); ?>", // sets the text for the "Filter" button
+							  clear: "<?php echo $this->translator->translator("portfolio_filter_messages_clear", '', 'Portfolio'); ?>", // sets the text for the "Clear" button
+					  
+							  // when filtering boolean numbers
+							  isTrue: "<?php echo $this->translator->translator("portfolio_filter_messages_isTrue", '', 'Portfolio'); ?>", // sets the text for "isTrue" radio button
+							  isFalse: "<?php echo $this->translator->translator("portfolio_filter_messages_isFalse", '', 'Portfolio'); ?>", // sets the text for "isFalse" radio button
+					  
+							  //changes the text of the "And" and "Or" of the filter menu
+							  and: "<?php echo $this->translator->translator("portfolio_filter_messages_and", '', 'Portfolio'); ?>",
+							  or: "<?php echo $this->translator->translator("portfolio_filter_messages_or", '', 'Portfolio'); ?>"
+						  },
+						  operators: {
+							  string: {
+								  startswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_startswith", '', 'Portfolio'); ?>",
+								  contains: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_contains", '', 'Portfolio'); ?>",
+								  doesnotcontain: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_doesnotcontain", '', 'Portfolio'); ?>",
+								  endswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_endswith", '', 'Portfolio'); ?>",
+								  eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_eq", '', 'Portfolio'); ?>",
+								  neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_neq", '', 'Portfolio'); ?>"
+							  },
+							  number: {
+								  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_neq", '', 'Portfolio'); ?>",
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lt", '', 'Portfolio'); ?>"
+							  },
+							  date: {
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_lt", '', 'Portfolio'); ?>",
+							  	  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_neq", '', 'Portfolio'); ?>"
+							  },
+							  enums: {
+									eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_enum_eq", '', 'Portfolio'); ?>",
+									neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_enum_neq", '', 'Portfolio'); ?>"
+							  }
+						  }
+						},
+						model: {
+                                    fields: {
+                                        id: { type: "number" },
+                                        category_name: { type: "string" },
+                                        product_name: { type: "string" },
+                                        product_order: { type: "number", editable: false },
+                                        product_date: { type: "date" },
+										active: { type: "enums", editable: false },
+										common_action: { editable: false }
+                                    }
+                                },	
+						<?php if ($permission_arr['add_enable'] || $permission_arr['publish_enable'] || $permission_arr['delete_enable']) : ?>					
+						toolbar: kendo.template($("#toolbar_template").html()),	
+						<?php endif; ?>					
+						column_fields: [
+											{ field:"checkAll", headerTemplate: '<input type="checkbox" name="checkAll" id="checkAll" class="checkAll_btn"   />',	template: '<input type="checkbox" value="${id}" class="check_btn"  <?php if(!$permission_arr['publish_enable'] && !$permission_arr['delete_enable'] && !$permission_arr['featured_enable']) : ?>disabled="disabled"<?php endif; ?>/>' , width: 28, filterable: false, sortable: false, columnMenu: false},  // For Header : #= Selected ? checked="checked" : "" #       For Body :  # (checkAll) ? checked="checked" :  ""  #  # if(checkAll){ # checked # } #
+											{ 
+												field: "id", 		
+												title: 	"<?php echo $this->translator->translator('gallery_product_list_page_id'); ?>", 
+												width: 50, 
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+															format: "0",
+															min: 0,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}  
+											},
+											{ field: "category_name", title: "<?php echo $this->translator->translator('gallery_product_list_page_cat'); ?>", template: '#= (category_name) ? category_name : "<?php echo html_entity_decode($this->translator->translator('common_no_catagory'), ENT_QUOTES, 'UTF-8'); ?>" #', width: 120},
+											{ 
+												field: "product_thumb", 		
+												title:	"<?php echo $this->translator->translator('gallery_product_list_page_thumb'); ?>",
+												width: 50,
+												template: '# if(product_thumb_format){ # <div class="thumb"><img src="${product_thumb_format}" width="30" height="20" /></div> # } #',
+												filterable: false, 
+												sortable: false,
+												columnMenu: false 
+											},
+											{ 
+												field: "product_name", 		
+												title:	"<?php echo $this->translator->translator('gallery_product_list_page_pro_name'); ?>",
+												template: '<div title="${product_name}">${product_name}</div>'
+											},
+											{ 
+												field: "product_order", 		
+												title:	"<?php echo $this->translator->translator('common_order'); ?>", 
+												width: 105,												
+												headerTemplate: '<?php echo html_entity_decode($this->translator->translator('common_order'), ENT_QUOTES, 'UTF-8'); if($this->auth->getIdentity()->allow_change_order_listing == '1') : ?>&nbsp;&nbsp;<a href="javascript: void(0);" class="all_order_btn"><img src="application/modules/Administrator/layouts/scripts/images/tools/save.png" border="0" /></a><?php endif; ?>',
+												template: '<?php if($this->auth->getIdentity()->allow_change_order_listing == '1') : ?><input type="text" size="1" name="product_order" id="product_order" class="order_text" value="${product_order}" />&nbsp;<a href="javascript: void(0);" rel="${id}" class="up_btn"><img src="application/modules/Administrator/layouts/scripts/images/tools/up-arrow.gif" border="0" /></a>&nbsp;<a href="javascript: void(0);" rel="${id}" class="down_btn"><img src="application/modules/Administrator/layouts/scripts/images/tools/down-arrow.gif" border="0" /></a><?php else : ?>${product_order}<?php endif; ?>',
+												attributes:{ 'align' : 'center' },
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+															format: "0",
+															min: 0,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												} 
+											},
+											{ 
+												field: "product_date", 	
+												title:	"<?php echo $this->translator->translator('common_date'); ?>",  
+												format: "{0:MM/dd/yyyy}", 
+												template: '<div title="<strong><?php echo html_entity_decode($this->translator->translator('common_date'), ENT_QUOTES, 'UTF-8'); ?> : </strong>${product_date_format}<br /><strong><?php echo html_entity_decode($this->translator->translator('common_entry'), ENT_QUOTES, 'UTF-8'); ?> : </strong>${username}">#= kendo.toString(product_date,\'dd/MM/yyyy\') #</div>',
+												width: 75, 
+												attributes:{ 'align' : 'center' },
+												filterable: { 
+													ui: function(element) {
+														kendoDateTimeCalendar(element, settingObj);
+													}
+												}
+											},
+											{ 	
+												field: "active", 	
+												title:	"<?php echo $this->translator->translator('common_status'); ?>", 
+												width: 70,
+												template: '<a href="javascript:void(0);" class="publish_btn"  rel="${id}_${publish_status_product_name}_#= (active == 1) ? \'unpublish\' : \'publish\' #"><img src="#= (active == 1) ? \'application/modules/Administrator/layouts/scripts/images/tools/published.gif\' : \'application/modules/Administrator/layouts/scripts/images/tools/unpublished.gif\' #" title="#= (active == 1) ? \'<?php echo html_entity_decode($this->translator->translator('common_unpublish_title'), ENT_QUOTES, 'UTF-8'); ?>\' : \'<?php echo html_entity_decode($this->translator->translator('common_publish_title'), ENT_QUOTES, 'UTF-8'); ?>\' #" alt="#= (active == 1) ? \'<?php echo html_entity_decode($this->translator->translator('common_unpublish_title'), ENT_QUOTES, 'UTF-8'); ?>\' : \'<?php echo html_entity_decode($this->translator->translator('common_publish_title'), ENT_QUOTES, 'UTF-8'); ?>\' #" border="0" /></a>',
+												attributes:{ 'align' : 'center' },
+												filterable: { 
+													ui: function(element) {
+														element.kendoDropDownList({
+															dataSource: [ { Id: 0, Title: "<?php echo html_entity_decode($this->translator->translator("common_unpublished_language"), ENT_QUOTES, 'UTF-8'); ?>" }, { Id: 1, Title: "<?php echo html_entity_decode($this->translator->translator("common_published_language"), ENT_QUOTES, 'UTF-8'); ?>" } ],
+															dataTextField: "Title",
+    														dataValueField: "Id",
+															optionLabel: "<?php echo html_entity_decode($this->translator->translator("common_select"), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}
+											},
+											{ 
+												field: "common_action",	
+												title:	"<?php echo $this->translator->translator('common_action'); ?>", 
+												width: 80, 
+												attributes:{ 'align' : 'center' },
+												template:	'<?php if ($permission_arr['edit_enable']) : ?># if(edit_enable){ # <a href="Members-Gallery-Item-List-Edit/${id}/${group_id}"><img src="application/modules/Administrator/layouts/scripts/images/tools/edit.png" title="<?php echo html_entity_decode($this->translator->translator('common_edit_title'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('common_edit_title'), ENT_QUOTES, 'UTF-8'); ?>" border="0" /></a> # } #<?php endif; ?>'+
+															'<?php if ($permission_arr['delete_enable']) : ?>&nbsp;<a href="javascript:void(0);" class="delete_btn"  rel="${id}_${group_id}"><img src="application/modules/Administrator/layouts/scripts/images/tools/delete.png" title="<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>"  border="0" /></a><?php endif; ?>'+
+															'&nbsp;&nbsp;&nbsp;<a href="javascript:void(0);"  rel="${id}_${publish_status_product_name}_#= (featured == 1) ? \'unfeatured\' : \'featured\' #" class="featured_btn"><img src="#= (featured == 1) ? \'application/modules/Administrator/layouts/scripts/images/tools/featured.gif\' : \'application/modules/Administrator/layouts/scripts/images/tools/unfeatured.gif\' #" border="0" title="#= (featured == 1) ? \'<?php echo html_entity_decode($this->translator->translator('common_unfeature_title'), ENT_QUOTES, 'UTF-8'); ?>\' : \'<?php echo html_entity_decode($this->translator->translator('common_feature_title'), ENT_QUOTES, 'UTF-8'); ?>\' #" alt="#= (featured == 1) ? \'<?php echo html_entity_decode($this->translator->translator('common_unfeature_title'), ENT_QUOTES, 'UTF-8'); ?>\' : \'<?php echo html_entity_decode($this->translator->translator('common_feature_title'), ENT_QUOTES, 'UTF-8'); ?>\' #" /></a>', 
+												filterable: false, 
+												sortable: false,
+												columnMenu: false 
+											}
+										],
+						columnMenu:	{
+							columns: true,
+							messages: {
+									sortAscending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_ascending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									sortDescending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_descending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									filter: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_filter", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									columns: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_columns", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+								}
+						},
+						messages: {
+										display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+										empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+										page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+										of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+										itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+										first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+										previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+										next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+										last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+										refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+										
+										common_msg_dialog_id 		:	'dialog_msg',
+										common_confirn_dialog_id	:	'dialog-confirm',
+										common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_title			:	"<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_confirm		:	"<?php echo $this->translator->translator("product_list_delete_confirm"); ?>",
+										common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+										common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+										common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+										common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+										common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>",
+										common_perm_err				:	"<?php echo $this->translator->translator("common_perm_err"); ?>",
+										common_selected_err	 		:	"<?php echo $this->translator->translator("product_selected_err"); ?>"
+									}
+					};
+	commonGrid(settingObj);	
+});
+</script>
+
+<script type="text/x-kendo-template" id="toolbar_template">	
+	<div class="toolbar">
+		<div class="button-container">
+			<?php if ($permission_arr['add_enable']) : ?>
+			<span class="button  ui-widget-content-1"><a href="<?php echo $this->url(array('module'=> 'Gallery','controller'=>'members', 'action'=>'add','group_id' => $param_group_id), $add_page_route, true);?>"><span class="icon add"><?php echo html_entity_decode($this->translator->translator('common_add'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			<?php endif; ?>
+			<?php if ($permission_arr['publish_enable']) : ?>
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" rel="publish" class="publish_all"><span class="icon publish"><?php echo html_entity_decode($this->translator->translator('common_publish_selected'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" rel="unpublish" class="publish_all"><span class="icon unpublish"><?php echo html_entity_decode($this->translator->translator('common_unpublish_selected'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			<?php endif; ?>
+		
+			<?php if ($permission_arr['delete_enable']) : ?>
+			<span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="delete_all"><span class="icon delete"><?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+			<?php endif; ?>
+		</div>
+	</div>
+</script>
+
+
+
+<!-- Content Start-->
+<article class="member-dashboard">	
+  	<h1><?php echo $headTitle; ?></h1>
+    <br />
+    <div class="member-block block-control-panel">
+        <div class="block-heading">
+            <div class="symbol"><?php echo $this->translator->translator('members_dashboard_block_gallery_list_header_title'); ?></div>
+        </div>        
+        <div class="block-body">       		 
+             
+                        	  
+        	 <div id="example">
+             	<div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>>
+   					 <div id="grid"></div>  
+                 </div> 
+             </div> 
+             
+             
+                          
+        </div>
+    </div>    
+</article>
+<div id="dialog_msg" title="<?php echo $this->translator->translator('common_dialog_msg',$headTitle); ?>"></div>
+<div id="dialog-confirm" title="<?php echo $this->translator->translator('common_confirmation',$this->translator->translator('common_delete')); ?>"></div>
+<!-- Content End -->
+
+
+<?php endif; ?>

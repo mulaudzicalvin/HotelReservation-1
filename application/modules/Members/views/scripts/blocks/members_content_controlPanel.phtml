@@ -1,0 +1,721 @@
+<?php 
+$front_template = Zend_Registry::get('front_template');
+$translator = Zend_Registry::get('translator');
+
+//License
+$modules_license = new Administrator_Controller_Helper_ModuleLoader();
+
+//License Array
+$_CLASSIFIEDS = array(
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Gallery'),
+													'module' 	=> 'Gallery', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_gallery_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('addgrp','members','Gallery'),
+																				'link' 		=> 	$this->url(array('module' => 'Gallery','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'gallery-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','members','Gallery'),
+																				'link' 		=> 	$this->url(array('module' => 'Gallery','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'gallery-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','members','Gallery'),
+																				'link' 		=> 	$this->url(array('module' => 'Gallery','controller'=>'members', 'action'=>'add'),'Members-Gallery-Item-List-Add',true),
+																				'class' 	=> 	'photo-gallery-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_add_Gallery', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','members','Gallery'),
+																				'link' 		=> 	$this->url(array('module' => 'Gallery','controller'=>'members', 'action'=>'list'),'Members-Gallery-Item-List',true),
+																				'class' 	=> 	'photo-gallery-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_manage_gallery', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addcat','members','Gallery'),
+																				'link' 		=> 	$this->url(array('module' => 'Gallery','controller'=>'backend', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listcat','members','Gallery'),
+																				'link' 		=> 	$this->url(array('module' => 'Gallery','controller'=>'backend', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				)
+																	)
+											),		
+											/*array(
+													'active'	=>	$modules_license->checkModulesLicense('News'),
+													'module' 	=> 'News', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_news_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('addgrp','members','News'),
+																				'link' 		=> 	$this->url(array('module' => 'News','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'news-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','members','News'),
+																				'link' 		=> 	$this->url(array('module' => 'News','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'news-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','members','News'),
+																				'link' 		=> 	$this->url(array('module' => 'News','controller'=>'members', 'action'=>'add'),'Members-News-Item-List-Add',true),
+																				'class' 	=> 	'news-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','members','News'),
+																				'link' 		=> 	$this->url(array('module' => 'News','controller'=>'members', 'action'=>'list'),'Members-News-Item-List',true),
+																				'class' 	=> 	'news-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addcat','members','News'),
+																				'link' 		=> 	$this->url(array('module' => 'News','controller'=>'backend', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listcat','members','News'),
+																				'link' 		=> 	$this->url(array('module' => 'News','controller'=>'backend', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				)
+																	)
+											),*/										
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Autos'),
+													'module' 	=> 'Autos', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_autos_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('addgrp','backendgrp','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'autos-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','backendgrp','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'autos-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendpro','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backendpro', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'autos-listing-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendpro','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backendpro', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'autos-listing-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backend','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backend', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backend','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backend', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backendtype', 'action'=>'list', 'create' => 'new'),'adminrout',true),
+																				'class' 	=> 	'business-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_btype', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Autos'),
+																				'link' 		=> 	$this->url(array('module' => 'Autos','controller'=>'backendtype', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'business-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_btype', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Property'),
+													'module' 	=> 'Property', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_property_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('addgrp','backendgrp','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'property-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','backendgrp','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'property-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendpro','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backendpro', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'property-listing-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendpro','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backendpro', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'property-listing-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backend','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backend', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backend','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backend', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backendtype', 'action'=>'list', 'create' => 'new'),'adminrout',true),
+																				'class' 	=> 	'business-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_btype', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Property'),
+																				'link' 		=> 	$this->url(array('module' => 'Property','controller'=>'backendtype', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'business-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_btype', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Hotels'),
+													'module' 	=> 'Hotels', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_hotels_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('favorite','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'favorite'),'adminrout',true),
+																				'class' 	=> 	'api-settings-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_favorite_list', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addgrp','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'hotel-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'hotel-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'add'),'Members-Hotel-Add/*',true),
+																				'class' 	=> 	'hotel-listing-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_hotel', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'list'),'Members-Hotel-List/*',true),
+																				'class' 	=> 	'hotel-listing-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_hotel', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addcat','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'addcat'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listcat','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'listcat'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listtype','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'listtype', 'create' => 'new'),'adminrout',true),
+																				'class' 	=> 	'business-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_btype', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listtype','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'listtype'),'adminrout',true),
+																				'class' 	=> 	'business-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_btype', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addroom','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'addroom'),'Members-Hotel-Room-List-Add/*',true),
+																				'class' 	=> 	'hotel-room-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_room', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listroom','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'backendrooms', 'action'=>'listroom'),'Members-Hotel-Room-List/*',true),
+																				'class' 	=> 	'hotel-room-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_room', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addroomtype','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'addroomtype'),'Members-Hotel-Room-Type-List-Add/*',true),
+																				'class' 	=> 	'hotel-room-type-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_room_type', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listroomtype','members','Hotels'),
+																				'link' 		=> 	$this->url(array('module' => 'Hotels','controller'=>'members', 'action'=>'listroomtype'),'Members-Hotel-Room-Type-List/*',true),
+																				'class' 	=> 	'hotel-room-type-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_room_type', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Vacationrentals'),
+													'module' 	=> 'Vacationrentals', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_vacation_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('update','api','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'api', 'action'=>'update'),'adminrout',true),
+																				'class' 	=> 	'api-settings-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_api', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addgrp','backendgrp','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'vacation-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','backendgrp','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'vacation-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendpro','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backendpro', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'vacation-listing-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendpro','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backendpro', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'vacation-listing-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backend','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backend', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backend','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backend', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backendtype', 'action'=>'list', 'create' => 'new'),'adminrout',true),
+																				'class' 	=> 	'business-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_btype', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Vacationrentals'),
+																				'link' 		=> 	$this->url(array('module' => 'Vacationrentals','controller'=>'backendtype', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'business-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_btype', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Tours'),
+													'module' 	=> 'Tours', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_tours_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('update','api','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'api', 'action'=>'update'),'adminrout',true),
+																				'class' 	=> 	'api-settings-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_api', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('addgrp','backendgrp','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backendgrp', 'action'=>'addgrp'),'adminrout',true),
+																				'class' 	=> 	'tour-grp-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('listgrp','backendgrp','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backendgrp', 'action'=>'listgrp'),'adminrout',true),
+																				'class' 	=> 	'tour-grp-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_group', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendpro','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backendpro', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'tours-listing-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendpro','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backendpro', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'tours-listing-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backend','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backend', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'cat-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backend','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backend', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'cat-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_category', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backendtype', 'action'=>'list', 'create' => 'new'),'adminrout',true),
+																				'class' 	=> 	'business-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_btype', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtype','Tours'),
+																				'link' 		=> 	$this->url(array('module' => 'Tours','controller'=>'backendtype', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'business-manage-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_btype', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Flight'),
+													'module' 	=> 'Flight', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_flight_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('update','api','Flight'),
+																				'link' 		=> 	$this->url(array('module' => 'Flight','controller'=>'api', 'action'=>'update'),'adminrout',true),
+																				'class' 	=> 	'api-settings-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_api', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','airport','Flight'),
+																				'link' 		=> 	$this->url(array('module' => 'Flight','controller'=>'airport', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'flight-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_airport', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','airport','Flight'),
+																				'link' 		=> 	$this->url(array('module' => 'Flight','controller'=>'airport', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'flight-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_airport', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','airlines','Flight'),
+																				'link' 		=> 	$this->url(array('module' => 'Flight','controller'=>'airlines', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'airlines-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_airlines', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','airlines','Flight'),
+																				'link' 		=> 	$this->url(array('module' => 'Flight','controller'=>'airlines', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'airlines-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_airlines', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Costcalculator'),
+													'module' 	=> 'Costcalculator', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_hire_car_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('update','backendsettings','Costcalculator'),
+																				'link' 		=> 	$this->url(array('module' => 'Costcalculator','controller'=>'backendsettings', 'action'=>'update'),'adminrout',true),
+																				'class' 	=> 	'calculator-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_settings', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendpackage','Costcalculator'),
+																				'link' 		=> 	$this->url(array('module' => 'Costcalculator','controller'=>'backendpackage', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'vehicle-list-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendpackage','Costcalculator'),
+																				'link' 		=> 	$this->url(array('module' => 'Costcalculator','controller'=>'backendpackage', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'vehicle-list-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_listing', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendplan','Costcalculator'),
+																				'link' 		=> 	$this->url(array('module' => 'Costcalculator','controller'=>'backendplan', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'vehicle-plan-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_plan', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendplan','Costcalculator'),
+																				'link' 		=> 	$this->url(array('module' => 'Costcalculator','controller'=>'backendplan', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'vehicle-plan-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_plan', '', 'Administrator')
+																				)
+																	)
+											),
+											array(
+													'active'	=>	$modules_license->checkModulesLicense('Tracker'),
+													'module' 	=> 'Tracker', 
+													'name' 		=> $translator->translator('administrator_dashboard_block_module_logistics_title', '', 'Administrator'),
+													'items'		=> array(
+																			array(
+																				'active'	=>	$this->allow('add','backendairwaybill','Tracker'),
+																				'link' 		=> 	$this->url(array('module' => 'Tracker','controller'=>'backendairwaybill', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'awb-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_airwaybill', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendairwaybill','Tracker'),
+																				'link' 		=> 	$this->url(array('module' => 'Tracker','controller'=>'backendairwaybill', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'awb-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_airwaybill', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendtrack','Tracker'),
+																				'link' 		=> 	$this->url(array('module' => 'Tracker','controller'=>'backendtrack', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'status-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_status', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendtrack','Tracker'),
+																				'link' 		=> 	$this->url(array('module' => 'Tracker','controller'=>'backendtrack', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'status-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_status', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('add','backendnetwork','Tracker'),
+																				'link' 		=> 	$this->url(array('module' => 'Tracker','controller'=>'backendnetwork', 'action'=>'add'),'adminrout',true),
+																				'class' 	=> 	'network-add-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_add_network', '', 'Administrator')
+																				),
+																			array(
+																				'active'	=>	$this->allow('list','backendnetwork','Tracker'),
+																				'link' 		=> 	$this->url(array('module' => 'Tracker','controller'=>'backendnetwork', 'action'=>'list'),'adminrout',true),
+																				'class' 	=> 	'network-tools',
+																				'label'		=> 	$translator->translator('administrator_dashboard_block_module_manage_network', '', 'Administrator')
+																				)
+																	)
+											)
+										);
+?>
+
+<div class="member-block block-control-panel">
+	<div class="block-heading">
+    	<div class="symbol"><?php echo $translator->translator('members_dashboard_block_header_title', '', 'Members'); ?>  <a href="Dashboard"><span class="cp-icon"><?php echo $translator->translator('common_premium_btn_label'); ?></span></a></div>
+	</div>
+    <div class="block-body">
+    	<?php           
+            if ($this->allow('list','members','Members') || $this->allow('change','members','Members') || $this->allow('profile','members','Members')){
+            ?>
+        <fieldset>
+            <legend><?php echo $translator->translator('administrator_dashboard_block_user_title', '', 'Administrator'); ?></legend>
+             <?php           
+            if ($this->allow('list','members','Members')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Members','controller'=>'members', 'action'=>'list'),'Members-Frontend-List',true);?>"><div class="icon user-manage-tools"></div><p class="tools-tip"><?php echo $translator->translator('admin_menu_edit_user'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','members','Members')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Members','controller'=>'members', 'action'=>'list'),'Members-Frontend-List',true);?>"><div class="icon user-search-tools"></div><p class="tools-tip"><?php echo $translator->translator('admin_menu_search_user'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('change','members','Members')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Members','controller'=>'members', 'action'=>'change'),'Change-Password',true);?>"><div class="icon password-change-tools"></div><p class="tools-tip"><?php echo $translator->translator('Member_menu_change_pass', '', 'Members'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('profile','members','Members')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url( array('module' => 'Members','controller' => 'members', 'action'     => 'profile' ), 'Members-Profile-Update',    true) ?>"><div class="icon user-profile-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_view_profile', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            ?>
+        </fieldset>
+        <?php
+		}
+		?>
+        <?php
+		if ($this->allow('add','members','Articles') || $this->allow('list','members','Articles')){
+		?>            
+        <fieldset>
+            <legend><?php echo $translator->translator('administrator_dashboard_block_content_title', '', 'Administrator'); ?></legend>
+            <?php
+            if ($this->allow('add','members','Articles')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Articles','controller'=>'members', 'action'=>'add'),'Members-Article-Add/*',true);?>"><div class="icon article-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_article', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','members','Articles')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Articles','controller'=>'members', 'action'=>'list'),'Members-Article-List/*',true);?>"><div class="icon article-manage-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_article', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('add','backend','Menu')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Menu','controller'=>'backend', 'action'=>'add'),'adminrout',true);?>"><div class="icon menu-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_menu', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','backend','Menu')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Menu','controller'=>'backend', 'action'=>'list'),'adminrout',true);?>"><div class="icon menu-manage-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_menu', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('add','form','Members')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Members','controller'=>'form', 'action'=>'add'),'adminrout',true);?>"><div class="icon form-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_form', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','form','Members')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Members','controller'=>'form', 'action'=>'list'),'adminrout',true);?>"><div class="icon form-manage-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_form', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','backend','Articles')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Articles','controller'=>'backend', 'action'=>'list', 'link' => 1),'adminrout',true);?>"><div class="icon article-link-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_link_article', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','backend','Menu')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Menu','controller'=>'backend', 'action'=>'list'),'adminrout',true);?>"><div class="icon menu-link-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_link_menu', '', 'Administrator'); ?></p></a></div>	
+            <?php
+            }
+            if ($this->allow('approval','index','Administrator')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Administrator','controller'=>'index', 'action'=>'approval'),'adminrout',true);?>"><div class="icon pending-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_pending_approval', '', 'Administrator'); ?></p></a></div>	
+            <?php
+            }
+            ?>
+        </fieldset>
+        <?php
+		}
+		?>
+        <?php
+		if (( $modules_license->checkModulesLicense('News') && ($this->allow('add','members','News') || $this->allow('list','members','News'))) || $this->allow('list','members','Invoice') ){
+		?> 
+        <fieldset>
+            <legend><?php echo $translator->translator('administrator_dashboard_block_module_title', '', 'Administrator'); ?></legend>
+            <?php
+            if ($this->allow('add','members','News') && $modules_license->checkModulesLicense('News')){
+            ?>
+            	<div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'add', 'group_id' => '1'),'Members-News-Item-List-Add/:group_id',true);?>"><div class="icon news-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_news', '', 'Administrator'); ?></p></a></div>
+            	<div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'add', 'group_id' => '1'),'Members-News-Item-List-Add/:group_id',true);?>"><div class="icon news-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_ad', '', 'Administrator'); ?></p></a></div>
+            	<div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'add', 'group_id' => '1'),'Members-News-Item-List-Add/:group_id',true);?>"><div class="icon news-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_project', '', 'Administrator'); ?></p></a></div>
+            	<div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'add', 'group_id' => '1'),'Members-News-Item-List-Add/:group_id',true);?>"><div class="icon news-add-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_add_feedback', '', 'Administrator'); ?></p></a></div>
+			<?php
+            }
+            if ($modules_license->checkModulesLicense('News'))
+            {
+                if ($this->allow('list','members','News'))
+                {
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'list', 'group_id' => '1'),'Members-News-Item-List-By-Group/:group_id',true);?>"><div class="icon news-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_news', '', 'Administrator'); ?></p></a></div>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'list', 'group_id' => '5'),'Members-News-Item-List-By-Group/:group_id',true);?>"><div class="icon ad-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_ads', '', 'Administrator'); ?></p></a></div>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'list', 'group_id' => '3'),'Members-News-Item-List-By-Group/:group_id',true);?>"><div class="icon project-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_project', '', 'Administrator'); ?></p></a></div>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'News','controller'=>'members', 'action'=>'list', 'group_id' => '2'),'Members-News-Item-List-By-Group/:group_id',true);?>"><div class="icon feedback-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_feedback', '', 'Administrator'); ?></p></a></div>
+            <?php
+                }
+            }
+            if ($this->allow('list','members','Invoice') && $modules_license->checkModulesLicense('Invoice')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Invoice','controller'=>'members', 'action'=>'list'),'Members-Invoice-Item-List/*',true);?>"><div class="icon billing-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_invoice', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','backendpoll','Poll') && $modules_license->checkModulesLicense('Poll')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Poll','controller'=>'backendpoll', 'action'=>'list'),'adminrout',true);?>"><div class="icon pools-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_poll', '', 'Administrator'); ?></p></a></div>
+            <?php
+            }
+            if ($this->allow('list','backendcomment','Comment') && $modules_license->checkModulesLicense('Comment')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Comment','controller'=>'backendcomment', 'action'=>'list'),'adminrout',true);?>"><div class="icon comment-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_comment', '', 'Administrator'); ?></p></a></div>	
+            <!--<div class="tools-nav"><a href="<?php //echo $this->url(array('module' => 'Comment','controller'=>'backendcomment', 'action'=>'list'),'adminrout',true);?>"><div class="icon visitor-comment-tools"></div><p class="tools-tip"><?php //echo $translator->translator('administrator_dashboard_block_manage_comment_vigitor', '', 'Administrator'); ?></p></a></div>-->
+            <?php
+            }
+            if ($this->allow('list','backend','Review') && $modules_license->checkModulesLicense('Review')){
+            ?>
+            <div class="tools-nav"><a href="<?php echo $this->url(array('module' => 'Review','controller'=>'backend', 'action'=>'list'),'adminrout',true);?>"><div class="icon review-tools"></div><p class="tools-tip"><?php echo $translator->translator('administrator_dashboard_block_manage_review', '', 'Administrator'); ?></p></a></div>	
+            <?php
+            }            
+            ?>
+        </fieldset> 
+		<?php
+            }
+            ?>
+		<?php					
+		foreach($_CLASSIFIEDS as $data_arr)
+		{
+			$tmp = false;
+			if($data_arr['active'])
+			{
+				if($data_arr['items'])
+				{
+					foreach($data_arr['items'] as $ck_arr)
+					{
+						if($ck_arr['active'])
+						{
+							$tmp = true;
+							break;
+						}
+					}
+					if($tmp === true)
+					{
+		?>
+						<fieldset>
+							<legend><?php echo $translator->translator('administrator_dashboard_block_classifieds_title', $data_arr['name'], 'Administrator'); ?></legend>
+								<?php
+								foreach($data_arr['items'] as $item_arr)
+								{
+									if($item_arr['active'])
+									{
+								?>
+								<div class="tools-nav"><a href="<?php echo $item_arr['link']; ?>"><div class="icon <?php echo $item_arr['class']; ?>"></div><p class="tools-tip"><?php echo $item_arr['label']; ?></p></a></div>
+								<?php
+									}
+								}
+								?>
+						</fieldset>
+		<?php
+					}
+				}
+			}
+		}
+		?>
+		
+        
+               
+        
+    </div>
+</div>

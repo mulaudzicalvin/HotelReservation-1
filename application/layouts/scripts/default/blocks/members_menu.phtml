@@ -1,0 +1,181 @@
+<?php 
+$front_template = Zend_Registry::get('front_template'); 
+$translator = Zend_Registry::get('translator');
+
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/js/jquery.cookie.js');
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/js/jquery.hoverIntent.minified.js');
+echo $this->headScript()->setFile('application/layouts/scripts/'.$front_template['theme_folder'].'/vendor/scripts/js/sherpa_ui.js');
+
+//echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/members-menu/styles/reset.css');
+//echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/members-menu/styles/text.css');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/members-menu/styles/960_fluid.css');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/members-menu/styles/main.css');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/members-menu/styles/bar_nav.css');
+echo $this->headLink()->setStylesheet('application/layouts/scripts/'.$front_template['theme_folder'].'/css/members-menu/styles/side_nav.css');
+?>
+
+<div class="member-block block-member-menu">
+	<div class="block-heading">
+    	<div class="symbol">MY ACCOUNT</div>
+	</div>
+    <div class="block-body">
+    	<div id="side_nav" class="side_nav grid_3 push_down">
+    <ul class="clearfix">
+        <li><a class="round_left" href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/admin_user.png">
+            <span>Home</span></a>
+        </li> 
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/settings_2.png">
+            <span>Slide</span>
+            <span class="icon">&nbsp;</span>
+            </a>
+            <ul>
+                <li><a href="#">North America</a></li>
+                <li><a href="#">Europe
+                    <span class="icon">&nbsp;</span></a>	
+                    <ul>
+                        <li><a href="#">
+                            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/sign_post.png">Eastern</a></li>
+                        <li><a href="#">
+                            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/strategy_2.png">Central</a></li>
+                        <li><a href="#">
+                            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/refresh_2.png">Western	
+                            <span class="icon">&nbsp;</span></a>	
+                            <ul>
+                                <li><a href="#">
+                                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/post_card.png">Germany</a></li>
+                                <li><a href="#">
+                                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/speech_bubble.png">Netherlands</a></li>
+                                <li><a href="#">
+                                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/tags_2.png">France
+                                    <span class="left icon">&nbsp;</span></a>								
+                                    <ul class="slide_left">
+                                        <li><a href="#">Paris</a></li>
+                                        <li><a href="#">Lyon</a></li>
+                                        <li><a href="#">Marseille</a></li>
+                                        <li><a href="#">Toulouse</a></li>
+                                    </ul>					
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><a href="#">Asia</a></li>
+            </ul>
+        </li>				
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/Battery.png">
+            <span>Slide Accordion</span>
+            <span class="icon">&nbsp;</span></a>														
+            <ul>
+                <li><a href="#">
+                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/zip_file.png">Fruits
+                    <span class="icon">&nbsp;</span></a>
+                    <div class="accordion">
+                        <a href="#">Apples</a>
+                        <a href="#">Oranges</a>
+                        <a href="#">Bananas</a>
+                    </div>	
+                </li>
+                <li class="link"><a href="http://en.wikipedia.org/wiki/Bread">
+                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/winner_podium.png">Breads</a>
+                </li>
+                <li><a href="#">
+                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/sport_shirt.png">Vegetables
+                    <span class="icon">&nbsp;</span></a>
+                    <div class="accordion">
+                        <a href="#">Potatoes</a>
+                        <a href="#">Spinach</a>
+                        <a href="#">Celery</a>
+                    </div>	
+                </li>
+                <li><a href="#">
+                    <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/trashcan_2.png">Meat
+                    <span class="icon">&nbsp;</span></a>
+                    <div class="accordion">
+                        <a href="#">Beef</a>
+                        <a href="#">Pork</a>
+                        <a href="#">Venison</a>
+                    </div>	
+                </li>
+            </ul>					
+        </li>	
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/running_man.png">
+            <span>Accordion</span>
+            <span class="icon">&nbsp;</span></a>
+            <div class="accordion">
+                <a href="#">Apples</a>
+                <a href="#">Oranges</a>
+                <a href="#">Bananas</a>
+            </div>	
+        </li>	
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/price_tag.png">
+            <span>Video Games</span>
+            <span class="icon">&nbsp;</span></a>
+            <div class="accordion">
+                <a href="#">XBox</a>
+                <a href="#">PS3</a>
+                <a href="#">Wii</a>
+            </div>	
+        </li>	
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/chart_6.png">
+            <span>Mixed</span>
+            <span class="icon">&nbsp;</span></a>
+            <ul>
+                <li><a href="#">North America
+                    <span class="icon">&nbsp;</span></a>
+                    <div class="accordion">
+                        <a href="#">Paris</a>
+                        <a href="#">Lyon</a>
+                        <a href="#">Toulouse</a>
+                    </div>
+                </li>
+                <li><a href="#">Europe
+                    <span class="icon">&nbsp;</span></a>	
+                    <ul>
+                        <li><a href="#">Eastern</a></li>
+                        <li><a href="#">Central</a></li>
+                        <li><a href="#">Western
+                            <span class="icon">&nbsp;</span></a>		
+                            <ul>
+                                <li><a href="#">Germany</a></li>
+                                <li><a href="#">Netherlands</a></li>
+                                <li><a href="#">France
+                                    <span class="icon">&nbsp;</span></a>									
+                                    <div class="accordion">
+                                        <a href="#">Paris</a>
+                                        <a href="#">Lyon</a>
+                                        <a href="#">Marseille</a>
+                                    </div>					
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </li>
+                <li><a href="#">Asia</a></li>
+            </ul>
+        </li>
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/Book.png">
+            <span>Link</span></a>
+        </li>				
+        <li><a href="#">
+            <img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/members-menu/icons/grey/magnifying_glass.png">
+            <span>Search</span>
+            <span class="icon">&nbsp;</span></a>
+            <div class="drop_box round_all">
+                <form style="width:210px">
+                    <input class="round_all" value="Search...">
+                    <button class="send_right">Go</button>
+                </form>
+            </div>
+        </li>				
+    </ul>
+    <!--<a href="#" class="minimize round_bottom"><span>minimize</span></a>-->
+</div>
+    </div>
+</div>

@@ -1,0 +1,460 @@
+<div id="container">
+<?php  if (!$this->allow('list')) : ?>
+	<div class="grid_12 t_a_bottom">
+		<?php echo $this->translator->translator('Member_Access_deny_desc'); ?>
+	</div>
+<?php 
+	else :  
+$locale = Eicra_Global_Variable::getSession()->sess_lang;
+$locale_direction = Eicra_Global_Variable::getSession()->site_direction;
+$permission_arr = array('room_add_enable' => $this->allow('add','backendrooms','Hotels'), 'room_edit_enable' => $this->allow('edit','backendrooms','Hotels'), 'room_delete_enable' => $this->allow('delete','backendrooms','Hotels'), 'room_list_enable' => $this->allow('list','backendrooms','Hotels'));	
+
+echo $this->headScript()->setFile($this->baseUrl().'/vendor/scripts/BookingCalendar/js/jquery.dop.BookingCalendar.js');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/vendor/scripts/BookingCalendar/css/jquery.dop.BookingCalendar.css');
+
+$global_conf = Zend_Registry::get('global_conf');
+$currency = new Zend_Currency($global_conf['default_locale']);
+?>
+<script type="text/javascript">
+<?php
+if($this->auth->hasIdentity() && $this->auth->getIdentity()->access_other_user_article == '1')
+{
+?>
+$(function() {
+	$( "#entry_by" ).combobox();	
+})
+<?php
+}
+?>
+$(document).ready(function() {
+	
+	floatingbar('#floatingbar',"#button_top_bar",null);
+	
+	var roomSettingObj = {
+						grid_id : 'room-grid',
+						dest_url : "<?php echo $this->url(); ?>",
+						pageSize : '<?php echo Eicra_Global_Variable::getSession()->viewPageNum; ?>',
+						page: '<?php echo ($this->posted_data['page']) ? $this->posted_data['page'] : ''; ?>',						
+						calendar: {
+							culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+							value: ''
+						},
+						common_action : {
+								permission_arr : {
+										delete_enable	:	'<?php echo $permission_arr['room_delete_enable']; ?>'
+								},
+								delete_dest_btn				:	'a.room_delete_btn',
+								delete_dest_url				:	"<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'backendrooms', 'action'     => 'delete' ), 'adminrout',    true); ?>",
+								delete_dest_data_field 		: 	['id', 'room_name'],							
+								
+								delete_multi_dest_btn		:	'a.room_delete_all',
+								delete_multi_dest_url		:	"<?php echo $this->url( array('module'=> 'Hotels', 'controller' => 'backendrooms', 'action'     => 'deleteall' ), 'adminrout',    true); ?>",
+								
+								toolbar_button_loader		:	'<span class="icon loader"></span>',
+								ajax_loader_link			:	"application/modules/Administrator/layouts/scripts/images/loader/ajax_loader.gif",
+								
+								multi_action	: []
+						},
+						search_action: {
+								search_form_id : 'roomSearchForm',
+								search_form_btn : 'search_btn',
+								hasTinyMCE 	: false
+							},						
+						detailInit_action: {},
+						search_data : {},
+						batch:		false,
+						editable:	false,
+						scrollable: false, //{ virtual: false },
+						detailInit:	false,
+						dataBound: function(e) {									
+								var self = this;
+								bookingCalendar();						                      
+                        },
+						filterable:{
+						  extra: true,
+						  messages: {
+							  info: "<?php echo $this->translator->translator("portfolio_filter_messages_info", '', 'Portfolio'); ?>", // sets the text on top of the filter menu
+							  filter: "<?php echo $this->translator->translator("portfolio_filter_messages_filter", '', 'Portfolio'); ?>", // sets the text for the "Filter" button
+							  clear: "<?php echo $this->translator->translator("portfolio_filter_messages_clear", '', 'Portfolio'); ?>", // sets the text for the "Clear" button
+					  
+							  // when filtering boolean numbers
+							  isTrue: "<?php echo $this->translator->translator("portfolio_filter_messages_isTrue", '', 'Portfolio'); ?>", // sets the text for "isTrue" radio button
+							  isFalse: "<?php echo $this->translator->translator("portfolio_filter_messages_isFalse", '', 'Portfolio'); ?>", // sets the text for "isFalse" radio button
+					  
+							  //changes the text of the "And" and "Or" of the filter menu
+							  and: "<?php echo $this->translator->translator("portfolio_filter_messages_and", '', 'Portfolio'); ?>",
+							  or: "<?php echo $this->translator->translator("portfolio_filter_messages_or", '', 'Portfolio'); ?>"
+						  },
+						  operators: {
+							  string: {
+								  startswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_startswith", '', 'Portfolio'); ?>",
+								  contains: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_contains", '', 'Portfolio'); ?>",
+								  doesnotcontain: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_doesnotcontain", '', 'Portfolio'); ?>",
+								  endswith: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_endswith", '', 'Portfolio'); ?>",
+								  eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_eq", '', 'Portfolio'); ?>",
+								  neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_string_neq", '', 'Portfolio'); ?>"
+							  },
+							  number: {
+								  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_neq", '', 'Portfolio'); ?>",
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_number_lt", '', 'Portfolio'); ?>"
+							  },
+							  date: {
+								  gte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_gte", '', 'Portfolio'); ?>",
+								  gt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_gt", '', 'Portfolio'); ?>",
+								  lte:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_lte", '', 'Portfolio'); ?>",
+								  lt:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_lt", '', 'Portfolio'); ?>",
+							  	  eq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_eq", '', 'Portfolio'); ?>",
+								  neq:	"<?php echo $this->translator->translator("portfolio_filter_messages_operators_date_neq", '', 'Portfolio'); ?>"
+							  },
+							  enums: {
+									eq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_enum_eq", '', 'Portfolio'); ?>",
+									neq: "<?php echo $this->translator->translator("portfolio_filter_messages_operators_enum_neq", '', 'Portfolio'); ?>"
+							  }
+						  }
+						},
+						model: {
+                                    fields: {
+                                        id: { type: "number" },
+										full_name: { type: "string" },
+										room_type: { type: "string" },
+										room_name: { type: "string" },
+                                        descount_price: { type: "number" },
+										room_num: { type: "number" },                                        
+                                        room_entry_date: { type: "date" },                                        
+                                        available_num: { type: "enums" }
+                                    }
+                                },					
+						column_fields: [
+											{ field:"checkAll", 		headerTemplate: '<input type="checkbox" name="checkAll" id="checkAll" class="checkAll_btn"  <?php if(!$permission_arr['room_delete_enable']) : ?>disabled="disabled"<?php endif; ?>   />',	template: '<input type="checkbox" value="${id}" class="check_btn" <?php if(!$permission_arr['room_delete_enable']) : ?>disabled="disabled"<?php endif; ?> />' , width: 28, filterable: false, sortable: false, columnMenu: false},  // For Header : #= Selected ? checked="checked" : "" #       For Body :  # (checkAll) ? checked="checked" :  ""  #  # if(checkAll){ # checked # } #
+											{ 
+												field: "id", 	
+												template: '#= id_format #',	
+												title: 	"<?php echo $this->translator->translator('common_id'); ?>", 
+												width: 48, 
+												filterable: { 
+													ui: function(element) {
+														element.kendoNumericTextBox({
+															culture: "<?php echo str_ireplace('_', '-', $locale); ?>",
+															format: "0",
+															min: 1,															
+															placeholder: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_placeholder", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															upArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_upArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+															downArrowText: "<?php echo html_entity_decode($this->translator->translator("portfolio_numeric_text_box_messages_downArrowText", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}  
+											},
+											{ 
+												field: "full_name", 		
+												title:	"<?php echo $this->translator->translator('common_entry_by'); ?>",
+												width: 150,
+												template: '#= full_name  #',
+											},{ 
+												field: "room_type", 
+												template: '#= room_type #',
+												title:	"<?php echo $this->translator->translator('hotels_room_type_list_room_type_name'); ?>"
+											},
+											{ 
+												field: "room_name", 
+												template: '#= room_name #',
+												title:	"<?php echo $this->translator->translator('hotels_room_list_room_name'); ?>" ,
+												attributes:{ 'title' : '<strong><?php echo html_entity_decode($this->translator->translator('common_entry_by'), ENT_QUOTES, 'UTF-8'); ?> :</strong> #= username #' }
+											},
+											{ 	
+												field: "available_num", 	
+												title:	"<?php echo $this->translator->translator('hotels_room_list_available_today'); ?>", 
+												width: 120,
+												template: '# if(available_num == 1){ # #= \'<span class="hotel-available"><?php echo html_entity_decode(strip_tags($this->translator->translator("hotels_front_page_list_available_type_yes")), ENT_QUOTES, 'UTF-8'); ?></span>\' # # }else if(available_num == 2){ # #= \'<span class="hotel-booked"><?php echo html_entity_decode(strip_tags($this->translator->translator("hotels_front_page_list_available_type_book")), ENT_QUOTES, 'UTF-8'); ?></span>\' # # }else{ # #= \'<span class="hotel-not-available"><?php echo html_entity_decode(strip_tags($this->translator->translator("hotels_front_page_list_available_type_no")), ENT_QUOTES, 'UTF-8'); ?></span>\' # #  } #',
+												filterable: { 
+													ui: function(element) {
+														element.kendoDropDownList({
+															dataSource: [ { Id: 1, Title: "<?php echo html_entity_decode(strip_tags($this->translator->translator("hotels_front_page_list_available_type_yes")), ENT_QUOTES, 'UTF-8'); ?>" }, { Id: 2, Title: "<?php echo html_entity_decode(strip_tags($this->translator->translator("hotels_front_page_list_available_type_book")), ENT_QUOTES, 'UTF-8'); ?>" }, { Id: 3, Title: "<?php echo html_entity_decode(strip_tags($this->translator->translator("hotels_front_page_list_available_type_no")), ENT_QUOTES, 'UTF-8'); ?>" } ],
+															dataTextField: "Title",
+    														dataValueField: "Id",
+															optionLabel: "<?php echo html_entity_decode($this->translator->translator("common_select"), ENT_QUOTES, 'UTF-8'); ?>"
+														});
+													}
+												}
+											},
+											{ 
+												field: "room_entry_date", 	
+												title:	"<?php echo $this->translator->translator('common_entry_date'); ?>",  
+												format: "{0:MM/dd/yyyy}", 
+												template: '#= kendo.toString(room_entry_date,\'dd/MM/yyyy\') #',
+												attributes:{ 'align' : 'center', 'title' : "<strong><?php echo html_entity_decode($this->translator->translator('common_entry_date'), ENT_QUOTES, 'UTF-8'); ?> : </strong>${room_entry_date_format}" },
+												width: 110, 
+												filterable: { 
+													ui: function(element) {
+														kendoDateTimeCalendar(element, roomSettingObj);
+													}
+												}
+											},
+											{ 
+												field: "common_action",	
+												title:	"<?php echo $this->translator->translator('common_action'); ?>", 
+												width: 100, 
+												attributes:{ 'align' : 'center' },
+												template:	'<?php if ($permission_arr['room_edit_enable']) : ?># if(edit_enable){ #<a href="<?php echo $this->url( array('module' => 'Hotels', 'controller' => 'backendrooms', 'action'  => 'edit', 'id' => ''), 'adminrout',    true) ?>${id}"><img src="application/modules/Administrator/layouts/scripts/images/tools/edit.png" title="<?php echo html_entity_decode($this->translator->translator('common_edit_title'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('common_edit_title'), ENT_QUOTES, 'UTF-8'); ?>" border="0" /></a> # } #<?php endif; ?>'+
+															'<?php if ($permission_arr['room_edit_enable']) : ?>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0);" class="calendar_btn" rel="${id}"><img src="application/modules/Administrator/layouts/scripts/images/tools/calendar.png" title="<?php echo html_entity_decode($this->translator->translator('common_booking_calendar_title'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('common_booking_calendar_title'), ENT_QUOTES, 'UTF-8'); ?>" border="0" /></a><?php endif; ?>'+
+															'<?php if ($permission_arr['room_delete_enable']) : ?>&nbsp;&nbsp;&nbsp;<a href="javascript:void(0);" class="room_delete_btn"  rel="${id}_${publish_status_room_name}"><img src="application/modules/Administrator/layouts/scripts/images/tools/delete.png" title="<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>" alt="<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>"  border="0" /></a><?php endif; ?>', 
+												filterable: false, 
+												sortable: false,
+												columnMenu: false 
+											}
+										],
+						columnMenu:	{
+							columns: true,
+							messages: {
+									sortAscending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_ascending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									sortDescending: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_sort_descending", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									filter: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_filter", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>",
+									columns: "<?php echo html_entity_decode($this->translator->translator("portfolio_column_menu_messages_columns", '', 'Portfolio'), ENT_QUOTES, 'UTF-8'); ?>"
+								}
+						},
+						messages: {
+										display				: 	'<?php echo $this->translator->translator("portfolio_pagination_messages_display", '', 'Portfolio'); ?>',
+										empty				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_empty", '', 'Portfolio'); ?>',
+										page				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_page", '', 'Portfolio'); ?>',
+										of					:	'<?php echo $this->translator->translator("portfolio_pagination_messages_of", '', 'Portfolio'); ?>',
+										itemsPerPage		:	'<?php echo $this->translator->translator("portfolio_pagination_messages_items_per_page", '', 'Portfolio'); ?>',
+										first				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_first", '', 'Portfolio'); ?>',
+										previous			:	'<?php echo $this->translator->translator("portfolio_pagination_messages_previous", '', 'Portfolio'); ?>',
+										next				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_next", '', 'Portfolio'); ?>',
+										last				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_last", '', 'Portfolio'); ?>',
+										refresh				:	'<?php echo $this->translator->translator("portfolio_pagination_messages_refresh", '', 'Portfolio'); ?>',
+										
+										common_msg_dialog_id 		:	'dialog_msg',
+										common_confirn_dialog_id	:	'dialog-confirm',
+										common_ok					:	"<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_title			:	"<?php echo html_entity_decode($this->translator->translator('common_delete_title'), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_selected		:	"<?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_cancel				:	"<?php echo html_entity_decode($this->translator->translator("common_cancel"), ENT_QUOTES, 'UTF-8'); ?>",
+										common_delete_confirm		:	"<?php echo $this->translator->translator("hotels_list_delete_confirm"); ?>",
+										common_publish_title		:	"<?php echo $this->translator->translator("common_publish_title"); ?>",
+										common_unpublish_title		:	"<?php echo $this->translator->translator("common_unpublish_title"); ?>",										
+										common_publish_selected		:	"<?php echo $this->translator->translator("common_publish_selected"); ?>",
+										common_unpublish_selected	:	"<?php echo $this->translator->translator("common_unpublish_selected"); ?>",
+										common_publish_perm	 		:	"<?php echo $this->translator->translator("common_publish_perm"); ?>",
+										common_selected_err	 		:	"<?php echo $this->translator->translator("hotels_selected_err"); ?>"
+									}
+					};
+		commonGrid(roomSettingObj);
+	$('#hotel_id').change(function() {		
+					
+			if($('#hotel_id option:selected').val() == 'any' || $('#hotel_id option:selected').val() == '')
+			{
+				$('#room_type_id').html('<option value="any"><?php echo $this->translator->translator("common_any_language"); ?></option>');
+			}
+			else
+			{
+				$.ajax({
+					  url: "<?php echo $this->url( array('module' => 'Hotels', 'controller' => 'backendrooms', 'action'   => 'roomtype' ), 'adminrout',    true) ?>",
+					  type: 'POST',
+					  data: { id: $('#hotel_id option:selected').val() },
+					  beforeSend: function(){						
+							$('#room_type_id').html('<option value="any"><?php echo $this->translator->translator("common_loading_language"); ?></option>');
+							$('#room_type_id_err').html('<img src="application/modules/Administrator/layouts/scripts/images/loader/ajax_loader.gif" border="0" height="16" />');	
+							},
+					  success: function(response){
+						//alert(response);
+						var option = '<option value="any"><?php echo $this->translator->translator("common_any_language"); ?></option>';	
+						var json_arr = eval("("+response+")");
+									
+						if(json_arr.status == 'ok')
+						{
+							for(var i = 0; i < json_arr.datas.length; i++)
+							{
+								option += '<option value="'+json_arr.datas[i].id+'" >'+json_arr.datas[i].room_type+'</option>';
+							}							
+						}
+						else
+						{
+							option = json_arr.msg;
+						}
+						
+						$('#room_type_id').html(option);
+						$('#room_type_id_err').html('');
+					  }
+				});
+			}
+		});
+});
+
+function bookingCalendar()
+{
+	$('a.calendar_btn').unbind('click');
+	$('a.calendar_btn').click(function(){
+		 	var self = this;
+			var id = $(self).attr('rel');
+			openCalendarDialog(id);
+		 });	
+}
+function openCalendarDialog(id)
+{
+	$('#dialog_calendar_loader').dialog({
+				autoOpen: true,
+				width: 880,
+				height:480,
+				modal: false,
+				show: 'fade',
+				resizable: 'false',				
+				open: function(event, ui)
+					 {
+						$('#dialog_calendar').html('');
+						$('#dialog_calendar').DOPBookingCalendar({'Type':'BackEnd', 'DataURL':'<?php echo $this->url( array("module"=> "Hotels", "controller" => "backendrooms", "action"     => "load", "id" => "" ), "adminrout",    true) ?>'+id, 'SaveURL':'<?php echo $this->url( array("module"=> "Hotels", "controller" => "backendrooms", "action"     => "update", "id" => "" ), "adminrout",    true) ?>'+id,'Currency':'<?php echo $currency->getSymbol(); ?>'});						
+					 },
+				beforeClose: function(event, ui) { 
+						$('#dialog_calendar').html('');
+					 }
+			});
+}
+</script>
+
+<div class="title-container">
+	<div class="hotels-room"><h1><?php echo $this->translator->translator('hotels_room_list_page_name'); ?></h1></div>
+    
+    <div class="button-container">
+        <?php if ($permission_arr['room_add_enable']) : ?>
+        <span class="button  ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'backendrooms', 'action'     => 'add' ), 'adminrout',    true) ?>" ><span class="icon add"><?php echo html_entity_decode($this->translator->translator('common_add'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+        <?php endif; ?>
+        
+		<?php if ($permission_arr['room_delete_enable']) : ?>
+        <span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="room_delete_all"><span class="icon delete"><?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+        <?php endif; ?>
+    </div>
+</div>
+<div id="button_top_bar"></div>
+<div class="content-container">
+	<div id="sidebar-inner">
+    	<?php echo $this->partial('nav_menu.phtml');  ?>
+    </div>
+    
+    
+    <div id="content-inner">
+    
+    	<div class="toggle-container">
+         	<form name="roomSearchForm" id="roomSearchForm" action="<?php echo $this->url( array('module' => 'Hotels','controller' => 'backendrooms', 'action'     => 'list' ), 'adminrout',    true) ?>" method="get">
+                <div class="toggle-search">
+                	<!-- Row 1 Start -->
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="label"><?php echo $this->translator->translator('hotels_list_page_search_name'); ?></span>
+                        </div>
+                        
+                        <div class="toggle-field">
+                            <input type="text" operator="contains" class="ui-widget-content ui-corner-all" name="room_name" id="room_name" value="<?php echo $this->postData['room_name']; ?>" size="50" />
+                        </div>
+                         <?php
+						if($this->auth->hasIdentity() && $this->auth->getIdentity()->access_other_user_article == '1')
+						{
+						?>
+                        <div class="toggle-label">
+                            <span class="label"><?php echo $this->translator->translator('hotels_room_type_search_agent_list'); ?></span>
+                        </div>
+                        
+                        <div class="toggle-field">                        	
+                            <select name="entry_by" id="entry_by" operator="eq" class="ui-widget-content ui-corner-all">
+                            	<option value="any"><?php echo $this->translator->translator('common_any_language'); ?></option>
+                                <?php 
+								if($this->user_list)
+								{
+									foreach($this->user_list as $key=>$value)
+                                    {
+										$selected = ($this->postData['entry_by'] == $key) ? 'selected="selected"' : '';
+                                ?>
+                                    <option value="<?php echo $key; ?>" <?php echo $selected; ?>><?php echo $this->escape($value); ?></option>
+                                <?php
+                                    }
+								}
+                                ?>
+                            </select>
+                        </div>
+                        <?php
+						}
+						?>
+                 	</div>
+                    <!-- Row 1 End -->
+                    
+                    <!-- Row 2 Start -->
+                    <div class="toggle-row">
+                        <div class="toggle-label">
+                            <span class="label"><?php echo $this->translator->translator('hotels_room_type_search_hotel_list'); ?></span>
+                        </div>
+                       
+                        <div class="toggle-field">                            
+                            <select name="hotel_id" id="hotel_id" operator="eq" class="ui-widget-content ui-corner-all" <?php if(!empty($this->room_type_id)){ ?>disabled="disabled" style="background:#CCC;"<?php } ?>>
+                            	<option value="any"><?php echo $this->translator->translator('common_any_language'); ?></option>
+                                <?php 
+								if($this->hotel_list)
+								{
+									foreach($this->hotel_list as $value)
+                                    {
+										$selected =  '';
+                                ?>
+                                    <option value="<?php echo $value['room_type_id']; ?>" <?php echo $selected; ?>><?php echo $this->escape($value['hotels_name']); ?></option>
+                                <?php
+                                    }
+								}
+                                ?>
+                            </select>              
+                        </div>
+                        
+                        <div class="toggle-label">
+                            <span class="label"><?php echo $this->translator->translator('hotels_list_page_search_room_type'); ?></span>
+                        </div>
+                        
+                        <div class="toggle-field">
+                        	
+							<select name="room_type_id" id="room_type_id" operator="eq" class="ui-widget-content ui-corner-all" <?php if(!empty($this->room_type_id)){ ?>disabled="disabled" style="background:#CCC;"<?php } ?>>
+							<option value="any"><?php echo $this->translator->translator('common_any_language'); ?></option>							
+							</select>  
+                            <span id="room_type_id_err"></span>  
+                        </div>
+                        
+                 	</div>
+                    <!-- Row 2 End -->  
+                    
+                                    
+                   
+				</div>
+                <hr />
+                <div class="clr form-button-container">
+                    <span class="button ui-widget-content-1"><a href="javascript: void(0);" class="search_btn"><span class="icon search"><?php echo $this->translator->translator('hotels_room_type_search_button'); ?></span></a></span>
+                </div>
+        	</form>
+     	</div>
+           
+        <div class="chart">
+            <div <?php if($locale_direction == 'rtl'){ ?> class="k-rtl" <?php } ?>>
+               <div id="room-grid"></div>  
+           </div>
+		</div>
+	</div>
+</div>
+
+<div id="floatingbar">
+	<h1><?php echo $this->translator->translator('hotels_room_list_page_name'); ?></h1>
+    
+    <div class="button-container">
+        <?php if ($permission_arr['room_add_enable']) : ?>
+        <span class="button  ui-widget-content-1"><a href="<?php echo $this->url( array('module' => 'Hotels','controller' => 'backendrooms', 'action'     => 'add' ), 'adminrout',    true) ?>" ><span class="icon add"><?php echo html_entity_decode($this->translator->translator('common_add'), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+        <?php endif; ?>
+        
+		<?php if ($permission_arr['room_delete_enable']) : ?>
+        <span class="button  ui-widget-content-1"><a href="javascript: void(0);" class="room_delete_all"><span class="icon delete"><?php echo html_entity_decode($this->translator->translator("common_delete_selected"), ENT_QUOTES, "UTF-8"); ?></span></a></span>
+        <?php endif; ?>
+    </div>
+</div>
+
+<?php endif; ?>
+	<div id="dialog_calendar_loader" style="display:none;"><div id="dialog_calendar"></div></div>
+	<div id="dialog_msg" title="<?php echo $this->translator->translator('common_dialog_msg',$this->translator->translator('hotels_room_list_page_name')); ?>"></div>
+	<div id="dialog-confirm" title="<?php echo $this->translator->translator('common_confirmation', $this->translator->translator('common_delete')); ?>"></div>	
+	<div id="dialog_loader" style="display:none" title="<?php echo $this->translator->translator('common_processing_language'); ?>">
+		<div id="progressbar" ></div>	
+	</div>
+</div>

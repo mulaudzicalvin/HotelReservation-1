@@ -1,0 +1,777 @@
+<?php
+$maximum_stars_digit = $this->translator->translator('maximum_stars_digit');
+$version = Zend_Registry::get('version'); 
+$tab_base_link = Zend_Controller_Front::getInstance()->getRequest()->getRequestUri();
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/BookingCalendar/js/jquery.dop.BookingCalendar.js');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/js/jquery/BookingCalendar/css/jquery.dop.BookingCalendar.css');
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/gallery/jquery.ad-gallery.js'); 
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/raty/js/jquery.raty.js');
+echo $this->headLink()->setStylesheet($this->baseUrl().'/js/jquery/gallery/jquery.ad-gallery.css');
+echo $this->headScript()->setFile($this->baseUrl().'/js/jquery/jquery.scrollTo.js');
+
+if(!empty($this->view_datas['hotel']['name'])){ $this->headMeta()->setName('keywords',$this->view_datas['hotel']['name']); }
+if(!empty($this->view_datas['hotel']['name'])) { $this->headMeta()->setName('description',$this->view_datas['hotel']['name']); }
+if(!empty($this->view_datas['hotel']['name'])) { $this->headTitle()->headTitle($this->escape($this->view_datas['hotel']['name']),'SET'); }
+
+function isnot_int($hotels_agent)
+{
+	$r = true;			
+	if(is_numeric($hotels_agent))
+	{ 
+		if(is_int((int)$hotels_agent))
+		{
+			$r = false;
+		}				
+	}
+	return $r;
+}
+
+// 1ist param options are : like, inline, plus_minus, horizontal, triangle
+$front_template = Zend_Registry::get('front_template');
+$vote = new Vote_Controller_Helper_ShowVoteButton('inline','hotels_page' );
+$business_type_db = new Hotels_Model_DbTable_BusinessType();
+$mem_db = new Members_Model_DbTable_MemberList();
+$room_db = new Hotels_Model_DbTable_Room();
+$global_conf = Zend_Registry::get('global_conf');
+$auth = Zend_Auth::getInstance ();
+$hasIdentity = $auth->hasIdentity ();
+
+
+
+if($this->view_datas['hotel']['area_id'])
+{												
+	try
+	{
+		$area_db = new Hotels_Model_DbTable_Area();
+		$area_info = $area_db->getAreaInfo($this->view_datas['hotel']['area_id']);		
+	}
+	catch(Exception $e)
+	{
+		
+	}
+}
+if($this->view_datas['hotel']['state_id'])
+{
+	try
+	{
+		$state_db = new Hotels_Model_DbTable_State();
+		$state_info = $state_db->getStateInfo($this->view_datas['hotel']['state_id']);
+	}
+	catch(Exception $e)
+	{
+		
+	}
+}
+if($this->view_datas['hotel']['country_id'])
+{
+	try
+	{
+		$country_db = new Hotels_Model_DbTable_Country();
+		$country_info = $country_db->getCountryName($this->view_datas['hotel']['country_id']);
+	}
+	catch(Exception $e)
+	{
+	}
+} 
+?>
+<style type="text/css">
+.dialogPosition{position:fixed;}	
+</style>
+<script type="text/javascript">
+function scrolling(class_name)
+{
+	$.easing.elasout = function(x, t, b, c, d) {
+		var s=1.70158;var p=0;var a=c;
+		if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
+		if (a < Math.abs(c)) { a=c; var s=p/4; }
+		else var s = p/(2*Math.PI) * Math.asin (c/a);
+		return a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
+	};
+	$('a.'+class_name).click(function(){//$.scrollTo works EXACTLY the same way, but scrolls the whole screen
+		var rel = $(this).attr('rel');
+		var id_arr = rel.split('-');
+		var id_no = parseInt(id_arr[1]);
+		$('#tabs').tabs({ active: --id_no });
+		$.scrollTo( rel , 1500, { easing:'swing' });		
+		return false;
+	});
+}
+
+function bookScrolling()
+{
+	$.easing.elasout = function(x, t, b, c, d) {
+		var s=1.70158;var p=0;var a=c;
+		if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
+		if (a < Math.abs(c)) { a=c; var s=p/4; }
+		else var s = p/(2*Math.PI) * Math.asin (c/a);
+		return a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
+	};
+	
+	$('a.book_btn').click(function() {
+	 	
+		var tmp  = false;
+		$.each($('#bookHotel').serializeArray(), function(i, field) {	
+			if(field.name.match(/\[\]$/))
+			{
+				if($('select[name="'+field.name+'"]').attr('class') == 'apartments_no')
+				{
+					if(field.value != '0' && field.value != '')
+					{
+						tmp = true;
+					}
+				}				
+			}			
+		});
+		if(tmp == true)
+		{
+			$('#bookHotel').submit();
+		}
+		else
+		{	
+			var msg = "<?php echo $this->translator->translator('hotels_selected_err'); ?>";
+			openMsgDialog(msg);	
+							
+			var self = this;			
+			var rel = $(self).attr('rel');
+			var id_arr = rel.split('-');
+			var id_no = parseInt(id_arr[1]);
+			$('#tabs').tabs({ active: --id_no });
+			$.scrollTo( rel , 1500, { easing:'swing' });			
+			return false;			
+		}
+	 });
+}
+
+function changeImageScrolling()
+{
+	$.easing.elasout = function(x, t, b, c, d) {
+		var s=1.70158;var p=0;var a=c;
+		if (t==0) return b;  if ((t/=d)==1) return b+c;  if (!p) p=d*.3;
+		if (a < Math.abs(c)) { a=c; var s=p/4; }
+		else var s = p/(2*Math.PI) * Math.asin (c/a);
+		return a*Math.pow(2,-10*t) * Math.sin( (t*d-s)*(2*Math.PI)/p ) + c + b;
+	};
+	
+	 
+	 $("a.change_img").click(function(){
+			var self = this;
+			var src = $(self).children("img:nth-child(1)").attr('src');			
+			$("div.ad-image").children("img:nth-child(1)").attr('src',src);							
+			$.scrollTo( '#gallery' , 1500, { easing:'swing' });			
+			return false;
+		});
+}
+
+ $(function() {				
+	var galleries = $('.ad-gallery').adGallery({
+					slideshow: {
+                       enable: true,
+                       autostart: true,
+                       speed: 5000,
+                       start_label: 'Start',
+                       stop_label: 'Stop',
+                       stop_on_scroll: true,
+                       countdown_prefix: '(',
+                       countdown_sufix: ')',
+                       onStart: false,
+                       onStop: false
+                     }
+					 });
+	$('#switch-effect').change(
+	  function() {
+		galleries[0].settings.effect = $(this).val();
+		return false;
+	  }
+	);
+	$('#toggle-slideshow').click(
+	  function() {
+		galleries[0].slideshow.toggle();
+		return false;
+	  }
+	);
+	$('#toggle-description').click(
+	  function() {
+		if(!galleries[0].settings.description_wrapper) {
+		  galleries[0].settings.description_wrapper = $('#descriptions');
+		} else {
+		  galleries[0].settings.description_wrapper = false;
+		}
+		return false;
+	  }
+	);
+  });
+$(function() {		
+		
+		$("#tabs").tabs({ 
+				active: <?php echo $this->tab; ?>, 
+				select: function(event, ui) { 
+				
+				} 		
+		}).find(".ui-tabs-nav").sortable({axis:'xy'});
+		
+		$("#matchTabs").tabs().find(".ui-tabs-nav").sortable({axis:'xy'});
+		
+		openBookingCalendar();
+		
+		changeImageScrolling();
+				
+		
+			
+	});
+	
+function openBookingCalendar()
+{
+	$('select.dialog_calendar_select').change(function() {
+		var self = this;
+		var id = $(self).val();	
+		var room_type = $(self).parents('div:first').attr('title');
+		$('select.dialog_calendar_select').val('0');
+		$(self).val(id);
+		if(id == '0' || id == 0 || id == null || id == '')
+		{
+			$('#dialog_calendar').html('');
+			$('#dialog_calendar').css('background', "none");
+			$('#dialog_calendar_title').text('');
+		}
+		else
+		{
+			$('#dialog_calendar_title').text(room_type);	
+			$('#dialog_calendar').html('');
+			$('#dialog_calendar').css('background', "url('js/jquery/BookingCalendar/images/loader-big.gif') no-repeat center center");
+			$('#dialog_calendar').DOPBookingCalendar({'Type':'FrontEnd', 'DataURL':'<?php echo $this->url( array("module"=> "Hotels", "controller" => "frontend", "action"     => "load", "id" => '' ), "adminrout",    true) ?>'+id,'Currency':''});
+		}
+	});
+}	
+
+function openMsgDialog(msg)
+{
+	$('#dialog_container').html(msg).dialog({
+		autoOpen: true,
+		modal: false,
+		show: 'explode',
+		resizable: true,	
+		dialogClass: 'dialogPosition',			
+		buttons: [{ text: "<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>", click: function() { $(this).dialog('option', 'hide', 'explode').dialog("close"); } } ],
+		open: function(event, ui)
+			 {
+				setTimeout(function() 
+				{									
+					if($('#' + event.target.id).dialog('isOpen'))
+					{
+						$('#' + event.target.id).dialog('option', 'hide', 'explode').dialog('close');										
+					}
+				}, 10000);
+			  }
+	});
+}
+
+
+$(document).ready(function() {
+	function stripslashes(str) 
+	{
+		str=str.replace(/\\'/g,'\'');
+		str=str.replace(/\\"/g,'"');
+		str=str.replace(/\\0/g,'\0');
+		str=str.replace(/\\\\/g,'\\');
+		return str;
+	}
+	
+	$('a.toggle_desc').click(function() {
+		var self = this;
+		var id = $(self).attr('rel');
+		
+		$('#room_type_desc'+id).slideToggle(500,function () {
+			
+		});
+		return false;
+	  });
+	  
+	 bookScrolling();	
+	
+	$('a.save_hotels_btn').click(function() {
+		var self = this;
+		var id = $(self).attr('rel');
+		$.ajax({
+			  url: "<?php echo $this->url( array('module' =>'Hotels','controller' => 'frontend', 'action'     => 'save' ), 'adminrout',    true) ?>",
+			  type: 'POST',
+			  data: { id: id },
+			  beforeSend: function(){						
+						$(self).html('<img src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/loader/mod-loader.gif" border="0" height="15" />');	
+					 },
+			  success: function(response){
+				//alert(response);
+				var json_arr = eval("("+response+")");							
+				if(json_arr.status == 'ok')
+				{
+					openMsgDialog(json_arr.msg);
+				}
+				else
+				{
+					openMsgDialog(json_arr.msg);
+				}
+				$(self).html('<?php echo $this->translator->translator("hotels_front_page_save_hotels"); ?>');
+			  }
+		});
+	});	
+	
+	$('a.print_btn').click(function (event){
+	
+			var width = 1200;
+    		var height = 700;
+			var left = parseInt((screen.availWidth/2) - (width/2));
+   			var top = parseInt((screen.availHeight/2) - (height/2));
+			var windowSizeArray = [ "width="+width+",height="+height+",left="+left+",top="+top+"screenX=" + left + ",screenY=" + top + ",scrollbars=yes",
+									"width="+width+",height="+height+",scrollbars=yes" ];
+			var url = "<?php echo $this->url(array('module' => 'Hotels','controller' =>'frontend', 'action' => 'print','hotels_title' => $this->escape($this->view_datas['hotel']['hotels_title']) ),'Hotels-print/:hotels_title',true); ?>";
+			var windowName = "popUp";
+			var windowSize = windowSizeArray[$(this).attr("rel")];
+
+			window.open(url, windowName, windowSize);
+
+			event.preventDefault();
+
+		});
+	
+});
+function raty (id, start_point)
+{
+	$('#'+id+'_star').raty({
+	  path: 'js/jquery/raty/img/',						  
+	  hintList:		<?php echo $this->translator->translator('common_rating_hintList'); ?>,
+	  number:     <?php $hint_arr = explode(', ',str_replace('[', '', str_replace(']', '', $this->translator->translator('common_rating_hintList')))); echo count($hint_arr); ?>,
+	  start: start_point,
+	  readOnly:   true					 
+	});
+}
+</script>
+<?php 
+$allow_obj = new Hotels_View_Helper_Allow();
+if (!$allow_obj->allowRule('details',null,null,$this->group_datas['role_id'])) : ?>
+	<?php echo $this->translator->translator('Member_Access_deny_desc'); ?>
+<?php else : 
+
+if($this->view_datas['hotel'])
+{	
+?>
+
+<div class="mod mod-details mod-wego">
+    <h1><?php echo $this->escape($this->view_datas['hotel']['name']); ?></h1>
+    <div class="clear">&nbsp;</div>
+    <!-- Hotel Info Start -->
+	<div class="products-info">
+    		<div class="products-stars">
+				<?php
+                    for($i = 1; $i < $maximum_stars_digit; $i++)
+                    {
+                        $hotel_stars = ($i <= $this->escape($this->escape($this->view_datas['hotel']['stars']))) ? "<img src='application/layouts/scripts/".$front_template['theme_folder']."/images/mod_hotel_img/star-active.png' border='0' />" : "<img src='application/layouts/scripts/".$front_template['theme_folder']."/images/mod_hotel_img/star-inactive.png' border='0' />";
+                        echo $hotel_stars.'&nbsp;';
+                    }
+                ?>
+            </div>
+                     	
+            <ul class="products-options">
+        		<li><?php echo $this->translator->translator('Satisfaction : ').$this->escape($this->view_datas['hotel']['satisfaction']); ?></li>
+            	<li><?php echo $this->translator->translator('Longitude :').$this->escape($this->view_datas['hotel']['longitude']); ?></li>
+            	<li><?php echo $this->translator->translator('Latitude :').$this->escape($this->view_datas['hotel']['latitude']); ?></li>            
+            
+				<?php if(!empty($this->view_datas['hotel']['recent_snippet'])) { ?>
+                <li><?php echo $this->translator->translator('Recent Snippet :').$this->escape($this->view_datas['hotel']['recent_snippet']); ?></li>
+                <?php } ?>          
+            
+				<?php if(!empty($this->view_datas['hotel']['reservation_phone'])){ ?>
+                    <span class="products-call"><?php if(!empty($this->view_datas['hotel']['reservation_phone'])){ ?><span><?php  echo $this->escape($this->view_datas['hotel']['reservation_phone']); ?></span><?php } ?></span>
+                <?php } ?> 
+        	</ul>
+    </div>
+    
+    <div class="products-info right">
+        <span class="products-status">
+            <span class="products-mark"><?php  echo $this->translator->translator('Neutral'); ?></span>&nbsp; <span class="products-type"><?php echo $this->escape($this->view_datas['hotel']['neutral']); ?></span>
+        </span>     
+        <div class="clear"></div>
+        <span class="products-review-count">
+        	<?php if(!empty($this->view_datas['hotel']['total_reviews'])){ $review_no = $this->view_datas['hotel']['total_reviews']; ?><span class="products-review-count"><a href="javascript:void(0);"><?php echo $this->translator->translator('common_review_no',$review_no); ?></a></span><?php } ?>
+		</span>
+        
+        <div class="products-vote">
+            <p><?php if($this->view_datas['hotel']['positive']){ echo '+'.$this->view_datas['hotel']['positive']; } if($this->view_datas['hotel']['negative']){ echo ' | -'.$this->view_datas['hotel']['negative']; } ?> <?php echo $this->translator->translator('hotels_front_page_label_voting'); ?></p>
+        </div>
+    </div>
+	<!-- Hotel Info End -->
+   
+    <!-- Hotel Details Middle Tab Start --> 	   
+    <div class="products-middle-tab-area">
+        <!-- Slide Show Start -->
+        <div class="products-slideshow">
+            <div id="container">
+                <div id="gallery" class="ad-gallery">
+                  <div class="ad-image-wrapper"></div>
+                  <div class="ad-controls"></div>
+                    <div class="ad-nav">
+                        <div class="ad-thumbs">
+                          <ul class="ad-thumb-list">
+                            <li>
+                              <a href="<?php echo $this->view_datas['hotel']['images'][0]['url']; ?>">
+                                <img src="<?php echo $this->view_datas['hotel']['image']; ?>"   width="70" height="50" title="<?php echo $this->escape($this->view_datas['hotel']['name']); ?>" alt="<?php echo $this->escape($this->view_datas['hotel']['name']); ?>"  class="image0">
+                                </a>
+                              </li>
+                            <?php	
+								$image_no  = 0;                                                                                
+                                foreach($this->view_datas['hotel']['images'] as $key=>$value)
+                                {	
+									if($key != 0)
+									{									                                
+                              ?>
+                              <li>
+                              <a href="<?php echo $value['url']; ?>">
+                                <img src="<?php echo $value['url']; ?>"  width="70" height="50" title="<?php echo $this->escape($this->view_datas['hotel']['name']); ?>" alt="<?php echo $this->escape($this->view_datas['hotel']['name']); ?>"  class="image0">
+                                </a>
+                              </li>
+                            <?php  
+									}
+									$image_no++;                                 
+                                }
+                            ?>					
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            
+                <div class="switch">
+                  <select id="switch-effect">
+                    <option value="slide-hori">Slide horizontal</option>
+                    <option value="slide-vert">Slide vertical</option>
+                    <option value="resize">Shrink/grow</option>
+                    <option value="fade">Fade</option>
+                    <option value="">None</option>
+                    </select> <a href="#" id="toggle-slideshow">Toggle slideshow</a> |
+                  <a href="#" id="toggle-description">Toggle description outside image</a>
+                </div>
+            </div>
+        </div>
+       	<!-- Slide Show End -->
+        
+        <!-- Hotel Match Start -->
+        <div class="match-container">
+        	<div id="matchTabs">
+            <ul>
+              <li><a href="<?php echo $tab_base_link; ?>#matchTabs-1"><?php echo $this->translator->translator('Property Amenities'); ?></a></li>
+              <li><a href="<?php echo $tab_base_link; ?>#matchTabs-2"><?php echo $this->translator->translator('Room Rate Summery'); ?></a></li>	        
+           	</ul>
+            <div class="match-tab-container" id="matchTabs-1">
+              <?php							
+						if($this->view_datas['hotel']['property_amenities'])
+						{							
+							foreach($this->view_datas['hotel']['property_amenities'] as $match_info)
+							{								
+				?>
+								
+							<div class="wego-fearures"><?php echo $this->escape($match_info); ?></div>
+								
+				<?php
+							}
+							
+						}
+					?>
+          	</div> 
+			
+			<div class="match-tab-container" id="matchTabs-2">
+              <div class="products-chart">
+					<div class="chart-desc">
+					  <?php							
+                                if($this->view_datas['hotel']['summary_room_rates'])
+                                {							
+                                    foreach($this->view_datas['hotel']['summary_room_rates'] as $match_info)
+                                    {														
+                        ?>
+                                
+                                        <div class="label"><?php echo $this->escape($match_info['provider_name']); ?></div>                                
+                                        <div class="value"><?php echo $this->escape($match_info['currency_sym'].$match_info['price_str']); ?></div>
+                        <?php
+                                    }
+                                    
+                                }
+                        ?>
+                	 </div>
+				</div>
+          	</div>
+            
+            </div>
+        	
+        </div>
+        <!-- Hotel Match End -->
+	</div>
+    
+    <div class="products-details">
+       <div class="products-details-header"><h4 class="icon"><?php echo $this->translator->translator('hotels_front_page_hotels_details'); ?></h4></div>
+       <div class="content">
+	   		<span class="details-info"><?php echo $this->escape($this->view_datas['hotel']['desc']); ?></span>
+       </div>
+    </div>
+  
+    <!-- Hotel Bottom Tab Start -->
+    
+    <div id="tabs">
+    		<ul>
+                <li><a href="<?php echo $tab_base_link; ?>#tabs-1"><?php echo $this->translator->translator('hotels_front_page_hotels_details'); ?></a></li>
+                <li><a href="<?php echo $tab_base_link; ?>#tabs-2"><?php echo $this->translator->translator('hotels_front_page_hotels_photo'); ?> <span class="photo-no"><?php echo $image_no;  ?></span></a></li>
+                <li><a href="<?php echo $tab_base_link; ?>#tabs-3"><?php echo $this->translator->translator('Room Amenities'); ?></a></li>
+                <li><a href="<?php echo $tab_base_link; ?>#tabs-4"><?php echo $this->translator->translator('Concepts'); ?></a></li>
+                <li><a href="<?php echo $tab_base_link; ?>#tabs-5"><?php echo $this->translator->translator('Direct Providers'); ?></a></li>
+                <li><a href="<?php echo $tab_base_link; ?>#tabs-6"><?php echo $this->translator->translator('Cancellation Policy'); ?></a></li>              
+            </ul>
+            
+            <div id="tabs-1">
+				<?php
+				if($this->view_datas['hotel']['room_rates'][0])
+				{
+				?>
+            	<!-- Tab Detail Start -->
+                    <div class="room-chart-container">
+						<form name="bookHotel" id="bookHotel" action="<?php echo $this->url(array('module' => 'Hotels','controller' =>'book', 'action' => 'booking','hotels_title' => $this->escape($this->view_datas['hotel']['hotels_title']) ),'Book-Hotel/:hotels_title',true) ?>" method="post">		
+								<div class="room-chart">									<!-- Header Start -->
+										<div class="room-chart-row">
+											<div class="room-chart-header-col-1 details-header-col-1">
+												<?php echo $this->translator->translator('Provider Name'); ?>
+											</div>
+											
+											<!--<div class="room-chart-header-col-1 room-chart-header-col-2">												
+											</div>-->
+											
+											<div class="room-chart-header-col-1 room-chart-header-col-3 details-header-col-3">
+												<?php echo $this->translator->translator('hotels_front_page_list_head_price_per_room'); ?>
+											</div>
+											
+											<div class="room-chart-header-col-1 room-chart-header-col-4 details-header-col-4">
+												<?php echo $this->translator->translator('Action'); ?>
+											</div> 
+										</div>
+									<!-- Header End -->
+								</div>
+								
+									<?php
+															
+										$room_type_name_arr = array();	
+										$count = 0;																
+										foreach($this->view_datas['hotel']['room_rates'] as $key=>$room_rates)
+										{																							
+											$row_class = ($key % 2 == 0) ? 'room-chart-row2' : 'room-chart-row2 room-chart-row3';	
+											$height_style =  '';	
+											$book_link  =  'http://www.wego.com/hotels/api/search/redirect/'.$this->search_id.'?hotel_id='.$this->hotel_id.'&room_rate_id='.$room_rates['id'].'&key='.$this->apiKey;																				
+									?>
+								<div class="room-chart chart-border">
+									
+									<!-- Row-2 & Row-3 Start -->
+									<div class="<?php echo $row_class ?>" <?php echo $height_style; ?>>
+										<div class="room-chart-c1 details-col-1">
+											<span><a href="javascript: void(0);" class="toggle_desc preview chart-link" rel="<?php echo $this->escape($room_rates['id']); ?>" link=""  title="<?php echo $this->escape($room_rates['provider_name']); ?>"><?php echo $this->escape($room_rates['provider_name']); ?></a></span>
+										</div>
+										
+										<!--<div class="room-chart-c1 room-chart-c2" <?php // echo $height_style; ?>>
+											<a class="preview" link="" title="<?php //echo $this->translator->translator('hotels_front_page_list_title_people',$this->escape($room_rates['provider_name'])); ?>">
+												
+											</a>
+										</div>-->
+										
+										<div class="room-chart-c1 room-chart-c3 details-col-3" <?php echo $height_style; ?>>
+												<span class="hotel-price"><?php echo $this->escape($room_rates['currency_sym'].$room_rates['price_str']); ?></span>
+										</div>
+										
+										<div class="room-chart-c1 room-chart-c4 details-col-4" <?php echo $height_style; ?>>
+											<?php
+											if($global_conf['payment_system'] == 'On'){
+											?>
+                                            <span><a href="<?php echo $book_link; ?>"  ><?php echo $this->translator->translator('hotels_front_page_show_price'); ?></a></span>
+											<?php } ?>
+                                        </div>                                                                       
+									</div>
+									
+									</div>
+									<div class="room-chart chart-border">
+								   
+										<div id="room_type_desc<?php echo $room_type_info['id']; ?>"  class="room-chart-details">
+											   
+										</div>      
+									</div>
+									<!-- Row-2 & Row-3 End -->                                            
+									<?php														
+											$count++;
+										}
+									?>	
+						</form>
+ 					</div>
+                <!-- Tab Detail End -->
+				<?php
+				}
+				?>
+                
+                <!-- Hotel Summary Start -->
+                
+                <div class="products-feature">
+                	<div class="products-details">
+       						<div class="products-details-header"><h4 class="icon"><?php echo $this->translator->translator('hotels_front_page_Title_summary'); ?></h4></div>                        
+                        	<?php							 						 
+							 if($this->view_datas['hotel']['room_rates_count'])
+							 {
+							 ?>
+							 <div class="summary-label"><?php echo $this->translator->translator('Room Rates :'); ?></div>
+							 <div class="summary-value">
+								<?php echo $this->escape($this->view_datas['hotel']['room_rates_count']); ?>
+                    		 </div>
+                             <?php
+							 }							 
+							 if($this->view_datas['hotel']['rooms_count'])
+							 {
+							 ?>
+							<div class="summary-label"><?php echo $this->translator->translator('Total Room :'); ?></div>
+							<div class="summary-value">
+								<?php echo $this->escape($this->view_datas['hotel']['rooms_count']); ?>
+                    		</div>
+                            <?php
+							 }							 
+							 if($this->view_datas['hotel']['fax'])
+							 {
+							 ?>
+                            <div class="summary-label"><?php echo $this->translator->translator('Fax :'); ?></div>
+                            <div class="summary-value"><?php echo $this->escape($this->view_datas['hotel']['fax']); ?></div>
+                            
+                            <?php
+							 }							 
+							 if($this->view_datas['hotel']['postal_code'])
+							 {
+							 ?>
+                             <div class="summary-label"><?php  echo $this->translator->translator('Post Code :'); ?></div>
+                             <div class="summary-value"><?php echo $this->escape($this->view_datas['hotel']['postal_code']); ?></div>
+                             <?php
+							 }							 
+							 if($this->view_datas['hotel']['check_in'])
+							 {
+							 ?>
+                             <div class="summary-label"><?php echo $this->translator->translator('Check In :'); ?></div>
+                             <div class="summary-value"><?php echo $this->escape($this->view_datas['hotel']['check_in']); ?></div>
+                             <?php
+							 }
+							 if($this->view_datas['hotel']['check_out'])
+							 {
+							 ?>
+                             <div class="summary-label"><?php echo $this->translator->translator('check Out :');  ?></div>
+                             <div class="summary-value"><?php echo $this->escape($this->view_datas['hotel']['check_out']); ?></div>
+                             <?php
+							 }
+							 if($this->view_datas['hotel']['address'])
+							 {
+							 ?>
+                             <div class="summary-label"><?php echo $this->translator->translator('Address :');  ?></div>
+                             <div class="summary-value"><?php echo $this->escape($this->view_datas['hotel']['address']); ?></div>
+                             <?php
+							 }							 
+							 ?>                              
+                	</div>                    
+               	</div>
+                <!-- Hotel Summary End -->               
+               
+            </div>
+				
+            <div id="tabs-2">
+                <h4><?php echo $this->translator->translator('hotels_front_page_Title_images'); ?></h4>	
+                
+                <?php
+					
+					foreach($this->view_datas['hotel']['images'] as $key => $value)
+					{
+				?>              
+                <div>
+                   	<a href="javascript:void(0);" class="change_img preview" link="<?php echo $value['url']; ?>"  title="<?php echo $this->escape($this->view_datas['hotel']['name']); ?>" width="250"><img src="<?php echo $value['url']; ?>"  height="115" border="0" class="thumb additional-thumb"/></a>  
+                </div>
+                <?php                                   
+                     $i++;
+                  }
+                ?>
+                
+            </div>
+            
+            <div id="tabs-3">
+				<h2><?php echo $this->translator->translator('Room Amenities'); ?></h2>
+                
+               	 <?php							
+						if($this->view_datas['hotel']['property_amenities'])
+						{							
+							foreach($this->view_datas['hotel']['property_amenities'] as $property_amenities)
+							{								
+				?>
+								<div class="products-features">&bull; <?php echo $this->escape($property_amenities); ?></div>
+				<?php
+							}
+							
+						}
+					?>
+			</div>
+			
+			<div id="tabs-4">
+				  <h4><?php echo $this->translator->translator('Concepts'); ?></h4>
+                  
+                
+                  <?php							
+						if($this->view_datas['hotel']['concepts'])
+						{							
+							foreach($this->view_datas['hotel']['concepts'] as $concepts)
+							{	
+								if($concepts['store'])
+								{							
+				?>
+								<div class="products-features">&bull; <?php echo $this->escape($concepts['store']); ?></div>
+				<?php
+								}
+							}
+							
+						}
+					?>
+			</div>
+            
+            <div id="tabs-5">
+            	<h2><?php echo $this->translator->translator('Direct Providers'); ?></h2>
+               <?php							
+						if($this->view_datas['hotel']['direct_providers'])
+						{							
+							foreach($this->view_datas['hotel']['direct_providers'] as $direct_providers)
+							{	
+								if($direct_providers)
+								{							
+				?>                   
+								<div class="products-features">&bull; <?php echo $this->escape($direct_providers); ?></div>
+				<?php
+								}
+							}
+							
+						}
+					?>
+            </div>		
+				
+            <div id="tabs-6">
+            	<h2><?php echo $this->translator->translator('Cancellation Policy'); ?></h2>
+               <?php							
+						if($this->view_datas['hotel']['cancellation_policy'])
+						{							
+							foreach($this->view_datas['hotel']['cancellation_policy'] as $cancellation_policy)
+							{	
+								if($cancellation_policy)
+								{							
+				?>
+								  
+								<div class="products-features">&bull; <?php echo $this->escape($cancellation_policy); ?></div>
+				<?php
+								}
+							}
+							
+						}
+					?>
+            </div>           
+    </div>
+    <!-- Hotel Bottom Tab End -->
+</div>
+
+<div id="dialog_container" title="<?php echo $this->translator->translator('common_dialog_msg','Message'); ?>"></div>
+<?php
+}
+
+ endif; ?>	

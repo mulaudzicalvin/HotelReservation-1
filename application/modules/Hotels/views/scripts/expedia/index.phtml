@@ -1,0 +1,1471 @@
+<?php
+$front_template = Zend_Registry::get('front_template');
+function hotels_truncate($phrase,$start_words, $max_words)
+{
+   $phrase_array = explode(' ',$phrase);
+   if(count($phrase_array) > $max_words && $max_words > 0)
+	  $phrase = implode(' ',array_slice($phrase_array, $start_words, $max_words)).'...';
+   return $phrase;
+}
+$global_conf = Zend_Registry::get('global_conf');
+?>
+<style type="text/css">
+img.remove_btn{cursor:pointer;}
+</style>
+<script type="text/javascript">
+$(document).ready(function() {
+		calender('check_in_search', 'check_out_search');
+		calender('check_out_search', 'check_in_search');
+		
+		
+		// Toggle Function Start
+		$('#pro_list').hide('slow');
+		$('a.toggle_pro').click(function() {
+		var self = this;
+		$('#pro_list').slideToggle(500,function () {
+			var src = $(self).children("img").attr('src');
+			var input = (src == 'application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/down-arrow.png') ? 'application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/right-arrow.png' : 'application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/down-arrow.png';
+			$(self).children("img").attr('src',input);
+		});
+		return false;
+		});
+		
+		//var dd = $("#category").mcDropdown("#categorymenu");	
+		// Toggle Function End
+		
+		
+		$("#accordion").accordion({
+				active: 0,
+				collapsible:true,
+				autoHeight: true,
+				clearStyle: true 	
+			});
+		searchBox();
+});
+
+function searchBox()
+{	
+	for(var i = 0; i < 8; i++)
+	{		
+		for(var j = 0; j < 3; j++)
+		{
+			$('#room-'+i+'-child-'+j+'-age').hide();
+		}
+		if(i > 0)
+		{
+			$('#room-'+i+'-div').hide();
+			if($('#remove-room-'+i))
+			{
+				$('#remove-room-'+i).hide();
+			}
+		}
+		
+		$('#room-'+i+'-children').change(function() {
+			var self = this;
+			var val = $(self).val();
+			var name_arr = $(self).attr('name').split('-');	
+					
+			for(var a = 0; a < 3; a++)
+			{
+				if(a < val)
+				{				
+					$('#room-'+name_arr[1]+'-child-'+a+'-age').fadeIn();
+				}
+				else
+				{
+					$('#room-'+name_arr[1]+'-child-'+a+'-age').val('');
+					$('#room-'+name_arr[1]+'-child-'+a+'-age').fadeOut();					
+				}
+			}
+		});			
+	}
+	
+	$('img.remove_btn').click(function(){
+		var self = this;
+		var self_id = $(self).attr('id');
+		var id_arr = self_id.split('-');
+		
+		$(self).parents('div:first').parents('div:first').fadeOut();	
+		
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(2)').children('select:nth-child(1)').val('');	
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(3)').children('select:nth-child(1)').val('');			
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(4)').children('select:nth-child(1)').val('');
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(4)').children('select:nth-child(1)').hide();
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(4)').children('select:nth-child(2)').val('');
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(4)').children('select:nth-child(2)').hide();
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(4)').children('select:nth-child(3)').val('');
+		$(self).parents('div:first').parents('div:first').children('div:nth-child(4)').children('select:nth-child(3)').hide();
+		
+		
+		var c = 0;
+		var id_v = 0;
+		for(var l = 0; l < 8; l++)
+		{
+			if($('#room-'+l+'-div').is(":visible") && (l != (id_arr[2] - 1)))
+			{				
+				id_v  = l + 1;
+				c++;
+				$('#room-'+l+'-div').children('div:nth-child(1)').children('p:nth-child(1)').text("<?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-"+c);
+			}
+		}
+		
+		if(c <= 1)
+		{				
+			$('#remove-room-'+id_v ).fadeOut();
+		}
+		
+		$('#add_room').fadeIn();
+	});	
+	
+	$('#add_room').click(function(){
+					
+		for(var k = 0; k < 8; k++)
+		{
+			if(!$('#room-'+k+'-div').is(":visible"))
+			{
+				$('#remove-room-'+ k ).show();
+				$('#remove-room-'+ (k + 1)).show();
+				$('#room-'+k+'-div').fadeIn();				
+				
+				break;
+			}
+		}
+		var cnt = 0;
+		for(var k = 0; k < 8; k++)
+		{
+			if($('#room-'+k+'-div').is(":visible"))
+			{				
+				$('#remove-room-'+ k ).show();
+				$('#remove-room-'+ (k + 1)).show();
+				cnt++;
+				$('#room-'+k+'-div').children('div:nth-child(1)').children('p:nth-child(1)').text("<?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-"+cnt);
+			}
+		}
+		if(cnt == 8){ $(this).fadeOut(); }
+	});
+	
+	$('#location_for_search').click(function(){			
+			var newVal = ($(this).val() == '<?php echo  html_entity_decode($this->translator->translator("hotels_api_expedia_search_city_field_default_value"), ENT_QUOTES, "UTF-8"); ?>')? '' : $(this).val();
+			$(this).val(newVal);
+		});
+	
+	$('#location_for_search').blur(function(){			
+			var newVal = ($(this).val() == '')? '<?php echo html_entity_decode($this->translator->translator("hotels_api_expedia_search_city_field_default_value"), ENT_QUOTES, "UTF-8"); ?>' : $(this).val();
+			$(this).val(newVal);
+		});
+}
+
+function calender(id,second_id)
+{
+	$("#"+id).datepicker({
+		showOn: 'button',
+		buttonImage: 'application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/calendar.png',
+		buttonImageOnly: true,		
+		monthNamesShort:<?php echo $this->translator->translator("common_calender_monthNamesShort"); ?>,
+		monthNames:<?php echo $this->translator->translator("common_calender_monthNames"); ?>,
+		dayNamesMin:<?php echo $this->translator->translator("common_calender_dayNamesMin"); ?>,
+		showAnim: 'slide',
+		buttonText: 'Calender',
+		dateFormat:'yy-mm-dd',
+		autoSize:false,
+		showButtonPanel:false,
+		changeMonth: true,
+		changeYear: true,
+		onSelect: function(dateText, inst) {
+			var id_type_arr = id.split('_');
+			var true_id = 		id_type_arr[0] + id_type_arr[1];			
+			var currentTime = new Date();
+			var currentDay = (currentTime.getDate() < 10) ? '0' + currentTime.getDate() : currentTime.getDate();
+			var currentMonth = ((currentTime.getMonth() + 1) < 10) ? '0' + (currentTime.getMonth() + 1) : (currentTime.getMonth() + 1);
+			var today = currentTime.getFullYear() + '-' + currentMonth + '-' + currentDay;				
+			if(true_id == 'checkin')
+			{				
+				if( (dateText != '') && ( (toTimestamp(dateText) >= toTimestamp($('#'+second_id).val())) || (toTimestamp(dateText) < toTimestamp(today)) )  )
+				{					
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_checkin_date_err'); ?>";					
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+				if(!is_30dayDiff(dateText, $('#'+second_id).val()))
+				{
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_date_difference_err'); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+			}
+			else if(true_id == 'checkout')
+			{
+				if( (dateText != '') && ( (toTimestamp(dateText) <= toTimestamp($('#'+second_id).val())) || (toTimestamp(dateText) < toTimestamp(today)) )  )
+				{
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_checkout_date_err'); ?>";
+					openMsgDialog(msg);
+					$('#'+id).val('');
+				}
+				if(!is_30dayDiff($('#'+second_id).val(), dateText))
+				{
+					var msg = "<?php echo $this->translator->translator('hotels_front_page_date_difference_err'); ?>";
+					openMsgDialog(msg);					
+					$('#'+id).val('');
+				}
+			}
+		}
+	});
+	$("img[class='ui-datepicker-trigger']").each(function(){ 
+			$(this).attr('style', '');
+		 });
+}
+
+function is_30dayDiff(checkin, checkout)
+{
+	if(checkin != '' && checkout != '')
+	{
+		var checkin_arr = checkin.split('-');
+		var checkout_arr = checkout.split('-');
+		var checkin_obj =new Date(checkin_arr[0], (checkin_arr[1] - 1), checkin_arr[2]);
+		var checkout_obj =new Date(checkout_arr[0], (checkout_arr[1] - 1), checkout_arr[2]);		
+		var one_day=1000*60*60*24;
+		var diff = Math.ceil((checkout_obj.getTime()-checkin_obj.getTime())/(one_day));	
+		if(diff > 30)
+		{
+			return false;
+		}	
+	}
+	return true;	
+}
+
+function toTimestamp(strDate){
+	 var datum = Date.parse(strDate);
+	 return datum/1000;
+}
+
+function openMsgDialog(msg)
+{
+$('#dialog_container').html(msg).dialog({
+			autoOpen: true,
+			modal: false,
+			show: 'explode',
+			resizable: true,				
+			buttons: [{ text: "<?php echo html_entity_decode($this->translator->translator('common_ok'), ENT_QUOTES, 'UTF-8'); ?>", click: function() { $(this).dialog('option', 'hide', 'explode').dialog("close"); } } ],
+			open: function(event, ui)
+				 {
+					setTimeout(function() 
+					{									
+						if($('#' + event.target.id).dialog('isOpen'))
+						{
+							$('#' + event.target.id).dialog('option', 'hide', 'explode').dialog('close');										
+						}
+					}, 10000);
+				  }
+		});
+}
+
+
+function text_truncate()
+{
+	$('div.jTruncate').jTruncate({
+		length:  300,
+		minTrail: 0,
+		moreText: "[<?php echo html_entity_decode($this->translator->translator('common_see_all'), ENT_QUOTES, "UTF-8"); ?>]",
+		lessText: "[<?php echo html_entity_decode($this->translator->translator('common_hide'), ENT_QUOTES, "UTF-8"); ?>]",
+		ellipsisText: "",
+		moreAni: "fast",
+		lessAni: 2000
+	});
+}
+function stripslashes(str)
+{
+	str=str.replace(/\\'/g,'\'');
+	str=str.replace(/\\"/g,'"');
+	str=str.replace(/\\0/g,'\0');
+	str=str.replace(/\\\\/g,'\\');
+	return str;
+}
+
+function removeErrorExpedia()
+{
+	var filename = '';
+	var filevalue = '';		
+	$.each($('#expediaForm').serializeArray(), function(i, field) {	
+			if(field.name.match(/\[\]$/))
+			{
+				var filearr = field.name.split('[]');
+				filename = filearr[0];					
+			}
+			else
+			{
+				filename 	= 	field.name;
+			} 			
+			$('input[name="'+filename+'"]').removeClass('ui-state-error');												
+	});				
+}
+
+function checkFields()
+{
+	removeErrorExpedia();
+	if($('#location_for_search').val() == "<?php echo html_entity_decode($this->translator->translator('hotels_api_expedia_search_city_field_default_value'), ENT_QUOTES, "UTF-8"); ?>" || $('#location_for_search').val() == '')
+	{
+		$('#location_for_search').addClass('ui-state-error');
+		openMsgDialog("<?php echo $this->translator->translator('hotels_api_expedia_search_city_field_error'); ?>");
+		return false;
+	}
+	
+	if($('#check_in_search').val() == '')
+	{
+		$('#check_in_search').addClass('ui-state-error');
+		openMsgDialog("<?php echo $this->translator->translator('hotels_api_expedia_search_check_in_field_error'); ?>");
+		return false;
+	}
+	
+	if($('#check_out_search').val() == '')
+	{
+		$('#check_out_search').addClass('ui-state-error');
+		openMsgDialog("<?php echo $this->translator->translator('hotels_api_expedia_search_check_out_field_error'); ?>");
+		return false;
+	}
+}
+
+</script>
+
+<h1><?php echo $this->translator->translator('hotels_front_page_api_search'); ?></h1>
+<div id="travel-now" class="mod travelnow-content">
+	<div class="search">
+       		<form name="expediaForm" id="expediaForm" action="<?php echo $this->url( array('module' => 'Hotels', 'controller' => 'expedia', 'action'     => 'index' ), 'Search-Ean-Hotels',    true); ?>" method="post" onsubmit="return checkFields();">
+           		<p><?php echo $this->translator->translator('hotels_api_expedia_search_box_location_search_msg'); ?> <span class="star_class">*</span></p>
+       			 
+           		<div><input name="location_for_search_LIKE" type="text" id="location_for_search" size="63" value="Type A City Name"/></div>
+            
+       	  		<div class="col clear">
+            		<p><?php echo $this->translator->translator('hotels_block_simple_search_label_check_in','','Hotels'); ?> <span class="star_class">*</span></p>
+              		<input name="check_in" type="text" id="check_in_search" size="15" />
+            	</div>
+            
+            	<div class="col">
+            		<p><?php echo $this->translator->translator('hotels_block_simple_search_label_check_out','','Hotels'); ?> <span class="star_class">*</span></p>
+                	<input name="check_out" type="text" id="check_out_search" size="15" />
+            	</div>
+                
+                <div class="field-label">
+                	<p class="left-spacer"></p>
+                	<p class="adults"><?php echo $this->translator->translator('hotels_api_expedia_search_box_adult_label'); ?></p>
+                    <p class="children"><?php echo $this->translator->translator('hotels_api_expedia_search_box_child_label'); ?></p>
+                    <p class="age"><?php echo $this->translator->translator('hotels_api_expedia_search_box_age_label'); ?></p>
+                </div>
+                
+                <div class="field-container clear" id="room-0-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-1</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-0-adult-total" id="room-0-adults" class="drop-list">
+                            <?php for($i = 1; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-0-adult-tota']) && ($this->post_data['room-0-adult-tota'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-0-child-total" id="room-0-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-0-child-total']) && ($this->post_data['room-0-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-0-child-0-age" id="room-0-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-0-child-0-age']) && ($this->post_data['room-0-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-0-child-1-age" id="room-0-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-0-child-1-age']) && ($this->post_data['room-0-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-0-child-2-age" id="room-0-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-0-child-2-age']) && ($this->post_data['room-0-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-1" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" /></a>
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-1-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-2</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-1-adult-total" id="room-1-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-1-adult-total']) && ($this->post_data['room-1-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-1-child-total" id="room-1-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-1-child-total']) && ($this->post_data['room-1-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-1-child-0-age" id="room-1-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-1-child-0-age']) && ($this->post_data['room-1-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-1-child-1-age" id="room-1-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-1-child-1-age']) && ($this->post_data['room-1-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-1-child-2-age" id="room-1-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-1-child-2-age']) && ($this->post_data['room-1-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-2" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-2-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-3</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-2-adult-total" id="room-2-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-2-adult-total']) && ($this->post_data['room-2-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-2-child-total" id="room-2-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-2-child-total']) && ($this->post_data['room-2-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-2-child-0-age" id="room-2-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-2-child-0-age']) && ($this->post_data['room-2-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-2-child-1-age" id="room-2-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-2-child-1-age']) && ($this->post_data['room-2-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-2-child-2-age" id="room-2-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-2-child-2-age']) && ($this->post_data['room-2-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-3" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-3-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-4</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-3-adult-total" id="room-3-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-3-adult-total']) && ($this->post_data['room-3-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-3-child-total" id="room-3-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-3-child-total']) && ($this->post_data['room-3-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-3-child-0-age" id="room-3-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-3-child-0-age']) && ($this->post_data['room-3-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-3-child-1-age" id="room-3-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-3-child-1-age']) && ($this->post_data['room-3-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-3-child-2-age" id="room-3-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-3-child-2-age']) && ($this->post_data['room-3-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-4" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-4-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-5</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-4-adult-total" id="room-4-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-4-adult-total']) && ($this->post_data['room-4-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-4-child-total" id="room-4-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-4-child-total']) && ($this->post_data['room-4-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-4-child-0-age" id="room-4-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-4-child-0-age']) && ($this->post_data['room-4-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-4-child-1-age" id="room-4-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-4-child-1-age']) && ($this->post_data['room-4-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-4-child-2-age" id="room-4-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-4-child-2-age']) && ($this->post_data['room-4-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-5" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-5-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-6</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-5-adult-total" id="room-5-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-5-adult-total']) && ($this->post_data['room-5-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-5-child-total" id="room-5-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-5-child-total']) && ($this->post_data['room-5-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-5-child-0-age" id="room-5-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-5-child-0-age']) && ($this->post_data['room-5-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-5-child-1-age" id="room-5-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-5-child-1-age']) && ($this->post_data['room-5-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-5-child-2-age" id="room-5-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-5-child-2-age']) && ($this->post_data['room-5-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-6" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-6-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-7</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-6-adult-total" id="room-6-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-6-adult-total']) && ($this->post_data['room-6-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-6-child-total" id="room-6-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-6-child-total']) && ($this->post_data['room-6-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-6-child-0-age" id="room-6-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-6-child-0-age']) && ($this->post_data['room-6-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-6-child-1-age" id="room-6-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-6-child-1-age']) && ($this->post_data['room-6-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-6-child-2-age" id="room-6-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-6-child-2-age']) && ($this->post_data['room-6-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-7" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="field-container clear" id="room-7-div">
+                    <div class="left-spacer">
+                         <p><?php echo $this->translator->translator('hotels_api_expedia_search_room'); ?>-8</p>
+                    </div>
+                    <div class="adults">                    
+                        <select  name="room-7-adult-total" id="room-7-adults" class="drop-list">
+                            <?php for($i = 0; $i <= 4; $i++){ 
+                            $selected = (!empty($this->post_data['room-7-adult-total']) && ($this->post_data['room-7-adult-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="children">
+                        <select name="room-7-child-total" id="room-7-children" class="drop-list">
+                            <?php for($i = 0; $i <= 3; $i++){ 
+                            $selected = (!empty($this->post_data['room-7-child-total']) && ($this->post_data['room-7-child-total'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                    </div>
+                
+                    <div class="age">
+                        <select name="room-7-child-0-age" id="room-7-child-0-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-7-child-0-age']) && ($this->post_data['room-7-child-0-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-7-child-1-age" id="room-7-child-1-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php 
+							for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-7-child-1-age']) && ($this->post_data['room-7-child-1-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <select name="room-7-child-2-age" id="room-7-child-2-age" class="drop-list age-list">
+                            <option value="-1" selected="selected">—</option>
+							<?php for($i = 0; $i <= 17; $i++){ 
+                            $selected = (!empty($this->post_data['room-7-child-2-age']) && ($this->post_data['room-7-child-2-age'] == $i)) ? 'selected="selected"' : '';
+                            ?>
+                            <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i; ?></option>
+                            <?php } ?>										
+                        </select>
+                        
+                        <img id="remove-room-8" class="remove_btn" src="application/layouts/scripts/<?php echo $front_template['theme_folder']; ?>/images/mod_hotel_img/remove.png" />
+                    </div>
+                </div>
+                
+                <div class="clear"><a href="javascript:void(0);" id="add_room"><?php echo $this->translator->translator('hotels_api_expedia_search_room_add'); ?></a></div>
+                
+                <div class="mod-col">
+                	<p><?php echo $this->translator->translator('hotels_api_expedia_search_box_country_label'); ?></p>
+                	<select id="countries" name="countries">
+                    	<option value="">Select your country</option>
+                        <option value="AF">Afghanistan</option>
+                        <option value="AX">Åland Islands</option>
+                        <option value="AL">Albania</option>
+                        <option value="DZ">Algeria</option>
+                        <option value="AS">American Samoa</option>
+                        <option value="AD">Andorra</option>
+                        <option value="AO">Angola</option>
+                        <option value="AI">Anguilla</option>
+                        <option value="AQ">Antarctica</option>
+                        <option value="AG">Antigua and Barbuda</option>
+                        <option value="AR">Argentina</option>
+                        <option value="AM">Armenia</option>
+                        <option value="AW">Aruba</option>
+                        <option value="AU">Australia</option>
+                        <option value="AT">Austria</option>
+                        <option value="AZ">Azerbaijan</option>
+                        <option value="BS">Bahamas</option>
+                        <option value="BH">Bahrain</option>
+                        <option value="BD">Bangladesh</option>
+                        <option value="BB">Barbados</option>
+                        <option value="BY">Belarus</option>
+                        <option value="BE">Belgium</option>
+                        <option value="BZ">Belize</option>
+                        <option value="BJ">Benin</option>
+                        <option value="BM">Bermuda</option>
+                        <option value="BT">Bhutan</option>
+                        <option value="BO">Bolivia</option>
+                        <option value="BA">Bosnia and Herzegovina</option>
+                        <option value="BW">Botswana</option>
+                        <option value="BV">Bouvet Island</option>
+                        <option value="BR">Brazil</option>
+                        <option value="IO">British Indian Ocean Territory</option>
+                        <option value="BN">Brunei Darussalam</option>
+                        <option value="BG">Bulgaria</option>
+                        <option value="BF">Burkina Faso</option>
+                        <option value="BI">Burundi</option>
+                        <option value="KH">Cambodia</option>
+                        <option value="CM">Cameroon</option>
+                        <option value="CA">Canada</option>
+                        <option value="CV">Cape Verde</option>
+                        <option value="KY">Cayman Islands</option>
+                        <option value="CF">Central African Republic</option>
+                        <option value="TD">Chad</option>
+                        <option value="CL">Chile</option>
+                        <option value="CN">China</option>
+                        <option value="CX">Christmas Island</option>
+                        <option value="CC">Cocos (Keeling) Islands</option>
+                        <option value="CO">Colombia</option>
+                        <option value="KM">Comoros</option>
+                        <option value="CG">Congo</option>
+                        <option value="CD">Congo, The Democratic Republic of The</option>
+                        <option value="CK">Cook Islands</option>
+                        <option value="CR">Costa Rica</option>
+                        <option value="CI">Cote D'ivoire</option>
+                        <option value="HR">Croatia</option>
+                        <option value="CU">Cuba</option>
+                        <option value="CY">Cyprus</option>
+                        <option value="CZ">Czech Republic</option>
+                        <option value="DK">Denmark</option>
+                        <option value="DJ">Djibouti</option>
+                        <option value="DM">Dominica</option>
+                        <option value="DO">Dominican Republic</option>
+                        <option value="EC">Ecuador</option>
+                        <option value="EG">Egypt</option>
+                        <option value="SV">El Salvador</option>
+                        <option value="GQ">Equatorial Guinea</option>
+                        <option value="ER">Eritrea</option>
+                        <option value="EE">Estonia</option>
+                        <option value="ET">Ethiopia</option>
+                        <option value="FK">Falkland Islands (Malvinas)</option>
+                        <option value="FO">Faroe Islands</option>
+                        <option value="FJ">Fiji</option>
+                        <option value="FI">Finland</option>
+                        <option value="FR">France</option>
+                        <option value="GF">French Guiana</option>
+                        <option value="PF">French Polynesia</option>
+                        <option value="TF">French Southern Territories</option>
+                        <option value="GA">Gabon</option>
+                        <option value="GM">Gambia</option>
+                        <option value="GE">Georgia</option>
+                        <option value="DE">Germany</option>
+                        <option value="GH">Ghana</option>
+                        <option value="GI">Gibraltar</option>
+                        <option value="GR">Greece</option>
+                        <option value="GL">Greenland</option>
+                        <option value="GD">Grenada</option>
+                        <option value="GP">Guadeloupe</option>
+                        <option value="GU">Guam</option>
+                        <option value="GT">Guatemala</option>
+                        <option value="GG">Guernsey</option>
+                        <option value="GN">Guinea</option>
+                        <option value="GW">Guinea-bissau</option>
+                        <option value="GY">Guyana</option>
+                        <option value="HT">Haiti</option>
+                        <option value="HM">Heard Island and Mcdonald Islands</option>
+                        <option value="VA">Holy See (Vatican City State)</option>
+                        <option value="HN">Honduras</option>
+                        <option value="HK">Hong Kong</option>
+                        <option value="HU">Hungary</option>
+                        <option value="IS">Iceland</option>
+                        <option value="IN">India</option>
+                        <option value="ID">Indonesia</option>
+                        <option value="IR">Iran, Islamic Republic of</option>
+                        <option value="IQ">Iraq</option>
+                        <option value="IE">Ireland</option>
+                        <option value="IM">Isle of Man</option>
+                        <option value="IL">Israel</option>
+                        <option value="IT">Italy</option>
+                        <option value="JM">Jamaica</option>
+                        <option value="JP">Japan</option>
+                        <option value="JE">Jersey</option>
+                        <option value="JO">Jordan</option>
+                        <option value="KZ">Kazakhstan</option>
+                        <option value="KE">Kenya</option>
+                        <option value="KI">Kiribati</option>
+                        <option value="KP">Korea, Democratic People's Republic of</option>
+                        <option value="KR">Korea, Republic of</option>
+                        <option value="KW">Kuwait</option>
+                        <option value="KG">Kyrgyzstan</option>
+                        <option value="LA">Lao People's Democratic Republic</option>
+                        <option value="LV">Latvia</option>
+                        <option value="LB">Lebanon</option>
+                        <option value="LS">Lesotho</option>
+                        <option value="LR">Liberia</option>
+                        <option value="LY">Libyan Arab Jamahiriya</option>
+                        <option value="LI">Liechtenstein</option>
+                        <option value="LT">Lithuania</option>
+                        <option value="LU">Luxembourg</option>
+                        <option value="MO">Macao</option>
+                        <option value="MK">Macedonia, The Former Yugoslav Republic of</option>
+                        <option value="MG">Madagascar</option>
+                        <option value="MW">Malawi</option>
+                        <option value="MY">Malaysia</option>
+                        <option value="MV">Maldives</option>
+                        <option value="ML">Mali</option>
+                        <option value="MT">Malta</option>
+                        <option value="MH">Marshall Islands</option>
+                        <option value="MQ">Martinique</option>
+                        <option value="MR">Mauritania</option>
+                        <option value="MU">Mauritius</option>
+                        <option value="YT">Mayotte</option>
+                        <option value="MX">Mexico</option>
+                        <option value="FM">Micronesia, Federated States of</option>
+                        <option value="MD">Moldova, Republic of</option>
+                        <option value="MC">Monaco</option>
+                        <option value="MN">Mongolia</option>
+                        <option value="ME">Montenegro</option>
+                        <option value="MS">Montserrat</option>
+                        <option value="MA">Morocco</option>
+                        <option value="MZ">Mozambique</option>
+                        <option value="MM">Myanmar</option>
+                        <option value="NA">Namibia</option>
+                        <option value="NR">Nauru</option>
+                        <option value="NP">Nepal</option>
+                        <option value="NL">Netherlands</option>
+                        <option value="AN">Netherlands Antilles</option>
+                        <option value="NC">New Caledonia</option>
+                        <option value="NZ">New Zealand</option>
+                        <option value="NI">Nicaragua</option>
+                        <option value="NE">Niger</option>
+                        <option value="NG">Nigeria</option>
+                        <option value="NU">Niue</option>
+                        <option value="NF">Norfolk Island</option>
+                        <option value="MP">Northern Mariana Islands</option>
+                        <option value="NO">Norway</option>
+                        <option value="OM">Oman</option>
+                        <option value="PK">Pakistan</option>
+                        <option value="PW">Palau</option>
+                        <option value="PS">Palestinian Territory, Occupied</option>
+                        <option value="PA">Panama</option>
+                        <option value="PG">Papua New Guinea</option>
+                        <option value="PY">Paraguay</option>
+                        <option value="PE">Peru</option>
+                        <option value="PH">Philippines</option>
+                        <option value="PN">Pitcairn</option>
+                        <option value="PL">Poland</option>
+                        <option value="PT">Portugal</option>
+                        <option value="PR">Puerto Rico</option>
+                        <option value="QA">Qatar</option>
+                        <option value="RE">Reunion</option>
+                        <option value="RO">Romania</option>
+                        <option value="RU">Russian Federation</option>
+                        <option value="RW">Rwanda</option>
+                        <option value="SH">Saint Helena</option>
+                        <option value="KN">Saint Kitts and Nevis</option>
+                        <option value="LC">Saint Lucia</option>
+                        <option value="PM">Saint Pierre and Miquelon</option>
+                        <option value="VC">Saint Vincent and The Grenadines</option>
+                        <option value="WS">Samoa</option>
+                        <option value="SM">San Marino</option>
+                        <option value="ST">Sao Tome and Principe</option>
+                        <option value="SA">Saudi Arabia</option>
+                        <option value="SN">Senegal</option>
+                        <option value="RS">Serbia</option>
+                        <option value="SC">Seychelles</option>
+                        <option value="SL">Sierra Leone</option>
+                        <option value="SG">Singapore</option>
+                        <option value="SK">Slovakia</option>
+                        <option value="SI">Slovenia</option>
+                        <option value="SB">Solomon Islands</option>
+                        <option value="SO">Somalia</option>
+                        <option value="ZA">South Africa</option>
+                        <option value="GS">South Georgia and The South Sandwich Islands</option>
+                        <option value="ES">Spain</option>
+                        <option value="LK">Sri Lanka</option>
+                        <option value="SD">Sudan</option>
+                        <option value="SR">Suriname</option>
+                        <option value="SJ">Svalbard and Jan Mayen</option>
+                        <option value="SZ">Swaziland</option>
+                        <option value="SE">Sweden</option>
+                        <option value="CH">Switzerland</option>
+                        <option value="SY">Syrian Arab Republic</option>
+                        <option value="TW">Taiwan, Province of China</option>
+                        <option value="TJ">Tajikistan</option>
+                        <option value="TZ">Tanzania, United Republic of</option>
+                        <option value="TH">Thailand</option>
+                        <option value="TL">Timor-leste</option>
+                        <option value="TG">Togo</option>
+                        <option value="TK">Tokelau</option>
+                        <option value="TO">Tonga</option>
+                        <option value="TT">Trinidad and Tobago</option>
+                        <option value="TN">Tunisia</option>
+                        <option value="TR">Turkey</option>
+                        <option value="TM">Turkmenistan</option>
+                        <option value="TC">Turks and Caicos Islands</option>
+                        <option value="TV">Tuvalu</option>
+                        <option value="UG">Uganda</option>
+                        <option value="UA">Ukraine</option>
+                        <option value="AE">United Arab Emirates</option>
+                        <option value="GB">United Kingdom</option>
+                        <option value="US">United States</option>
+                        <option value="UM">United States Minor Outlying Islands</option>
+                        <option value="UY">Uruguay</option>
+                        <option value="UZ">Uzbekistan</option>
+                        <option value="VU">Vanuatu</option>
+                        <option value="VE">Venezuela</option>
+                        <option value="VN">Viet Nam</option>
+                        <option value="VG">Virgin Islands, British</option>
+                        <option value="VI">Virgin Islands, U.S.</option>
+                        <option value="WF">Wallis and Futuna</option>
+                        <option value="EH">Western Sahara</option>
+                        <option value="YE">Yemen</option>
+                        <option value="ZM">Zambia</option>
+                        <option value="ZW">Zimbabwe</option>
+                	</select>
+                </div>
+                
+                <div class="mod-col">
+                	<p><?php echo $this->translator->translator('hotels_api_expedia_search_box_star_label'); ?></p>
+                    <select id="minStarRating" name="minStarRating">
+                        <option selected="selected" value="0"><?php echo $this->translator->translator('hotels_api_expedia_search_box_select_star_label'); ?></option>
+						<?php for($i = 1; $i <= 5; $i++){ 
+                            $selected = (!empty($this->post_data['minStarRating']) && ($this->post_data['minStarRating'] == $i)) ? 'selected="selected"' : '';
+                        ?>
+                        <option value="<?php echo $i; ?>" <?php echo $selected; ?>><?php echo $i  ?></option>
+					
+							<?php 
+                            if ($i < 5)
+                            {
+                             
+                            ?>
+                            <option value="<?php echo $i . '.5'; ?>" <?php echo $selected; ?>><?php echo $i . '.5' ; ?></option>
+                            
+                            
+                            <?php 
+                            }                        
+						    
+						} 
+						?>
+                    </select>
+                </div>
+               
+                <div class="clear"><input type="submit" name="button" id="button" value="<?php echo $this->translator->translator('hotels_block_simple_search_label_btn','','Hotels'); ?>" class="mod-button"/></div>
+			</form>
+	</div>
+    
+    <div class="home-ad">
+    	<?php echo $this->partial('expedia/blocks/ad_home_expedia.phtml'); ?>
+    </div>
+    <div class="clear"></div>
+    <?php 
+	
+	
+	if($this->errorMassage){	
+	
+		print_r ($this->verboseMessage);
+		echo  '<br />'.$this->errorMassage ;	
+
+	} 
+	
+ 	if (empty( $this->view_datas)){
+			echo '<div>';
+			echo '<br />';
+			$error_code = $this->expedia_error['handling'] . '   '. $this->expedia_error['category'] ;	
+			$error_massage = $this->expedia_error['verboseMessage'] ;
+			echo $error_code . $error_massage;
+			echo '</div>';
+			echo '<br />';
+	}
+	
+	else {
+		
+		
+		$expedia = new Hotels_Controller_Helper_Expedia ();
+		$hotelSummary = $this->view_datas_paginator;
+			
+			
+			if(!empty($hotelSummary))
+			{
+?>
+				<br  />
+				<div id="bottomPagination">
+				<?php
+                    echo $this->paginationControl($hotelSummary, 'Sliding', 'expedia/index-pagination-flickr.phtml'); 	 
+                ?>
+            	</div>
+<?php
+				$totalHotel = $this->view_datas['@size'];
+				foreach($hotelSummary as $hotel)
+				{
+					
+					$hotel_id =  0;
+
+					if (! empty($hotel['hotelId'])){
+						$hotel_id = $hotel['hotelId'];
+					}
+					else {
+						continue ;	
+					}
+
+					$details_link = $this->url(array('module'=> 'Hotels','controller' => 'expedia','action' => 'details', 'hotel_id' => $hotel_id, 'arrival' => $this->postValue['check_in'] , 'departure' => $this->postValue['check_out'] , 'rooms' =>'rooms1=1'), 'Details-Ean-Hotels/:hotel_id/:arrival/:departure/:rooms', true);
+					 
+						?>
+						  
+                        <div class="products-list travelnow-list">
+									<!-- list Header Start -->
+									<div class="list-header">
+                                    	<div class="header-row">
+                                            <div class="header-left">
+                                                <span class="mod-title"><?php echo hotels_truncate($this->escape($hotel['name']), 0, 6); ?></span><br />
+                                                <span class="info"><?php  $hotelAddress = $this->escape($hotel['address1']) . ' , ' . $hotel['address2']; echo $hotelAddress; ?></span>
+                                            </div>
+
+                                            <div class="header-middle">
+                                                <span class="products-mark"><?php echo $this->translator->translator('hotels_api_expedia_property_category'); ?></span>
+                                                <span class="products-type"><?php echo $propertyCategory = $expedia->getPropertyCategory($this->escape($hotel['propertyCategory'])); ?></span>
+                                            </div>
+
+                                            <div class="header-right">
+                                            
+                                                <?php
+                                                    echo '<span class="price-info">'.$this->translator->translator('hotels_api_expedia_room_price').'</span>';
+                                                    $lowRate =  $hotel['lowRate'];
+                                                    $highRate =  $hotel['highRate'];
+                                                    
+                                                    if($highRate > $lowRate)
+                                                    {
+                                                ?>												
+                                                    
+                                                    <span class="hotel-old-price"><?php echo $currencyCode.'&nbsp;'.$this->escape($highRate ); ?></span>&nbsp;
+                                                <?php 
+                                                    }
+                                                ?>    
+                                                    <span class="hotel-price"><?php echo $currencyCode.'&nbsp;'.$this->escape($lowRate); ?></span>&nbsp;
+                                                                
+                                            </div>
+                                     	</div>
+									</div>
+									<!-- list Header End -->
+
+									<!-- list Body Start -->
+										<div class="body-container travelnow-container">
+												<?php
+                                                    $promo = $roomRateDetailsList['RoomRateDetails']['promoId'];
+                                                                  
+                                                     if (! empty($promo)){
+                                                         
+                                                         echo '<div class="promo-offer">' .$roomRateDetailsList['RoomRateDetails']['promoDescription'].'</div> <div class="corner"></div>'; 
+                                                     }
+                                                ?>
+                                                
+											 	<div class="left-content">
+													<div class="img-wrapper">
+													   <a href="<?php echo $this->url(array('module'=> 'Hotels','controller' => 'expedia','action' => 'details',  'hotel_id' => $hotel_id, 'tab' => '1'), 'Details-Ean-Hotels/:hotel_id/:tab', true); ?>" class="preview" link="http://images.travelnow.com<?php echo $this->escape($hotel['thumbNailUrl']); ?>" title="<?php echo $this->translator->translator('hotels_front_page_hotels_photo_no',' '); ?>"><img src="http://images.travelnow.com<?php echo $this->escape($hotel['thumbNailUrl']); ?>" border="0" height="113" class="thumb"/></a>
+													   <div class="photo-count-container">
+															<div class="photo-count">
+																<a href="<?php echo $this->url(array('module'=> 'Hotels','controller' => 'expedia','action' => 'details', 'hotel_id' => $hotel_id, 'tab' => '1'), 'Details-Ean-Hotels/:hotel_id/:tab', true); ?>" title="<?php echo $this->translator->translator('hotels_front_page_hotels_click_view_listing'); ?>"><?php echo $this->translator->translator('hotels_front_page_hotels_photo_no',' '); ?></a>
+															</div>
+														</div>
+													</div>
+
+													<h2>
+														<a href="<?php echo $details_link; ?>" class="preview" link="" title="<?php echo $this->escape($hotel['name']); ?>"><?php echo hotels_truncate($this->escape($hotel['name']), 0, 5); ?></a>
+													</h2> 
+
+													<div class="products-stars">
+														<?php
+															for($stars = 0; $stars < 5 ; $stars++)
+															{
+																$hotel_stars = ($stars <= round ($hotel['hotelRating'])) ? '<img src="application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/star-active.png" />' : '<img src="application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/star-inactive.png" />';
+																echo $hotel_stars.'&nbsp;';
+															}
+														?>
+													</div>
+													
+    
+                                               		<?php 
+                                                        $reviews = $hotel['tripAdvisorReviewCount'] ;
+                                                        
+                                                        if (! empty($reviews)) {
+                                                    ?>
+                                                    <span class="products-review-count travelnow-review-count"><a href="javascript:void(0);"><?php echo $reviews  .' '. $this->translator->translator('hotels_api_expedia_room_reviews'); ?></a></span>
+                                                    <div><img src="<?php echo $hotel['tripAdvisorRatingUrl'] ?>"></div>
+                                                    <?php 
+                                                        }
+                                                    ?>
+                                       
+                                                    <div class="products-desc jTruncate clear">
+														<span class="label"><?php echo $this->escape( html_entity_decode ($hotel['locationDescription'])); ?></span>
+													</div>
+													<div class="products-desc jTruncate">
+														<?php echo $this->escape( html_entity_decode ($hotel['shortDescription'])); ?>
+													</div>
+											 </div>
+												<?php
+                                                  $amentiesList = $expedia->getAmenties($hotel['amenityMask']);                                                    	
+                                                  $totalAmentiesNumber =  count($amentiesList);
+                                                  if(! empty($amentiesList) || empty($totalAmentiesNumber))
+                                                  {
+                                              	?>
+												<div class="right-content">
+													<div class="list-features">
+                                                    	<ul type="circle">
+														<?php
+                                                            for ($amenties = 0 ; $amenties <= $totalAmentiesNumber ; $amenties++ ){
+																if(!empty($amentiesList[$amenties]))
+																{
+                                                               		echo '<li>'.$amentiesList[$amenties].'</li>';
+																}
+                                                            }
+                                                        ?>
+                                                        </ul>
+                                                 	</div>
+												</div>
+												<?php
+                                                   	 }                   
+                                                ?>
+                                               
+                                               <div>
+														<div class="room-chart-container">
+                                         					<div class="room-chart">
+															<!-- Header Start -->
+															<div class="room-chart-row">
+																<div class="room-chart-header-col-1">
+																	<?php echo $this->translator->translator('hotels_front_page_list_head_room_type'); ?>
+																</div>
+																
+																<div class="room-chart-header-col-1 room-chart-header-col-2">
+																	<?php echo $this->translator->translator('hotels_front_page_list_head_people_per_room'); ?>
+																</div>
+																
+																<div class="room-chart-header-col-1 room-chart-header-col-3">
+																	<?php echo $this->translator->translator('hotels_front_page_list_head_available_room'); ?>
+																</div>
+																
+																<div class="room-chart-header-col-1 room-chart-header-col-4">
+																	<?php echo $this->translator->translator('hotels_api_expedia_hotel_list_policy'); ?>
+																</div> 
+															</div>
+															<!-- Header End -->
+															<?php
+															$roomRateDetailsList =  $hotel['RoomRateDetailsList'];
+															$numOfRooms = count($roomRateDetailsList);
+															$total_Price = 0;
+															$surchargeTotal = 0;
+															$nightlyRateTotal = 0;
+															$maxNightlyRate = 0;
+															$currencyCode = '';
+															$commissionableUsdTotal = 0;
+															$averageRate	=	0;
+															$averageBaseRate	=	0;
+															$room_key = 0;
+															$rateKey = $roomRateDetailsList['RoomRateDetails']['rateKey'] ;
+															
+															foreach ($roomRateDetailsList as $room )
+															{
+																	$row_class = ( $room_key % 2 == 0) ? 'room-chart-row2' :  'room-chart-row2 room-chart-row3';
+																	/*echo '<pre>';														
+																	print_r($room);
+																	echo '</pre>'; */																	
+																	
+																	if(is_array ($room ) && empty ($total_Price ))
+																	{
+																		$total_Price 			= 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@total'] ;
+																		$surchargeTotal 		= 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@surchargeTotal'] ;
+																		$nightlyRateTotal 		= 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@nightlyRateTotal'] ;	
+																		$maxNightlyRate 		= 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@maxNightlyRate'] ;	
+																		$currencyCode 			= 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@currencyCode'] ;	
+																		$commissionableUsdTotal = 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@commissionableUsdTotal'] ;		
+																		$averageRate 			= 	$room['ChargeableRateInfo']['@averageRate'] ;	
+																		$averageBaseRate 		= 	$room['RateInfos']['RateInfo']['ChargeableRateInfo']['@averageBaseRate'] ;
+																	}
+																	$reservation_Param  =  array (
+																								  'hotelId' => $hotel_id , 
+																								  'thumbNailUrl' => $this->escape($hotel['thumbNailUrl']),
+																								  'hotelName' => $this->escape($hotel['name']),
+																								  'hotelAddress' => $this->escape($hotelAddress),
+																								  'lowRate' => $this->escape($hotel['lowRate']),
+																								  'rateCurrencyCode' => $this->escape($hotel['rateCurrencyCode']),
+																								  'shortDescription' => $this->escape($hotel['shortDescription']),
+																								  'hotelLocation' => $this->escape($hotelLocation),
+																								  'arrivalDate' => $this->postValue[Eicra_File_Constants::HOTELS_CHECK_IN], 
+																								  'departureDate' => $this->postValue[Eicra_File_Constants::HOTELS_CHECK_OUT], 
+																								  'rateKey' => $rateKey , 
+																								  'roomTypeCode' => $roomRateDetailsList['RoomRateDetails']['roomTypeCode'], 
+																								  'rateCode' => $roomRateDetailsList['RoomRateDetails']['rateCode'], 
+																								  'chargeableRate' => $total_Price  
+																					  			);																		
+																	// $request_object = base64_encode( json_encode ($reservation_Param) ) ;	
+																	//$booking =  $request_object ;
+															?>
+															<!-- Row-2 & Row-3 Start -->
+															<div class="<?php echo $row_class ?>">
+																<div class="room-chart-c1">
+																	<a class="preview" link="" title="<?php echo $this->escape($roomRateDetailsList['RoomRateDetails']['roomDescription']); ?>"><?php echo $this->escape($roomRateDetailsList['RoomRateDetails']['roomDescription']); ?></a> <?php if($save > 0){ echo $this->translator->translator('hotels_front_page_list_save_money',$save); } if($booked == true){ echo $this->translator->translator('hotels_front_page_list_booked_today'); } ?>
+																	
+																</div>
+																
+																<div class="room-chart-c1 room-chart-c2">
+																	<?php
+																		$max_people = 0;
+																		foreach($room['RateInfos']['RateInfo']['RoomGroup']['Room'] as $peoples_no)
+																		{
+																			$max_people += $peoples_no;
+																		}																		
+																	?>
+																	<a class="preview" link="" title="<?php echo $this->translator->translator('hotels_front_page_list_title_people',$max_people); ?>">
+																	<?php 
+																		if($max_people <= 4)
+																		{
+																			for($j = 1; $j <= $max_people; $j++)
+																			{
+																				echo '<img src="application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/people.png" border="0" />';
+																			}
+																		} 
+																		else
+																		{
+																			for($j = 1; $j <= 3; $j++)
+																			{
+																				echo '<img src="application/layouts/scripts/'.$front_template['theme_folder'].'/images/mod_hotel_img/people.png" border="0" />';
+																			}
+																			echo '<span class="person-count">'.$max_people.'</span>';
+																		}
+																	?>
+																	</a>
+																</div>
+																
+																<div class="room-chart-c1 room-chart-c3">
+																	<?php 																		
+																		if($roomRateDetailsList['RoomRateDetails']['propertyAvailable'])
+																		{
+																			echo $this->translator->translator('hotels_front_page_list_available_type_yes');
+																			
+																			$numberOfrooms = $roomRateDetailsList['RoomRateDetails']['currentAllotment'] ;
+																			if ($numberOfrooms > 0){
+																					echo  '<br>' . $this->translator->translator('hotels_front_page_list_available_type_left', $roomRateDetailsList['RoomRateDetails']['currentAllotment']) ;		
+																				}
+																			
+																		}
+																		else if($roomRateDetailsList['RoomRateDetails']['propertyAvailable'] == '0' || $roomRateDetailsList['RoomRateDetails']['maxRoomOccupancy'] == '0')
+																		{
+																			echo $this->translator->translator('hotels_front_page_list_available_type_no');
+																		}
+																		else {
+																			echo  $this->translator->translator('hotels_front_page_list_available_type_no');	
+																		}
+																		
+																	 ?>
+																</div>
+																
+																<div class="room-chart-c1 room-chart-c4">
+                                                                	<?php
+                                                                    $nonRefundable  = $roomRateDetailsList['RoomRateDetails']['nonRefundable'];
+																	$propertyRestricted = $roomRateDetailsList['RoomRateDetails']['propertyRestricted'];
+																	if (! empty( $nonRefundable))
+																	{
+																		echo  $this->escape($this->translator->translator('hotels_api_expedia_hotel_list_policy_nonRefundable')) . '<br />'; 	
+																	}
+																	
+																	if (! empty( $propertyRestricted))
+																	{
+																		echo  $this->escape($this->translator->translator('hotels_api_expedia_hotel_list_policy_restrictions')); 	
+																	}
+																	
+																	if ( empty( $nonRefundable) &&  empty( $propertyRestricted) && ($global_conf['payment_system'] == 'On')){
+																		echo '<span class="products-book-btn"><a href="'.$details_link.'">' .$this->escape($this->translator->translator('hotels_api_expedia_hotel_list_policy_get_rooms')).'</a></span>'; 	
+																	}
+																	?>
+																	
+																</div>
+																
+															</div>
+															<!-- Row-2 & Row-3 End -->
+															<?php			
+																$room_key++;	 
+															}
+															?>
+															</div>
+														</div>
+														                                           
+													</div>
+									</div>
+									<!-- list Body End -->
+
+									<!-- list footer start -->
+										<div class="list-footer">
+											<div class="footer-left">
+
+                                            <?php
+												$hotelLocation = $this->escape($hotel['city'])   . ' , ' .
+													 $this->escape($hotel['countryCode']) . ' ( Airport ' .
+													 $this->escape( $hotel['city']) . ' )';
+												echo $hotelLocation;
+											?> 
+											</div>
+											
+											<div class="footer-right">									
+
+												<span class="products-details-btn"><a href="<?php echo $details_link; ?>"><?php echo $this->translator->translator('hotels_api_expedia_select_a_hotel'); ?></a></span>
+											</div>
+
+										</div>
+									<!-- list footer end -->
+								</div>
+							
+			  <?php
+
+
+                }
+			?>
+            <br />
+            <div id="bottomPagination">
+				<?php
+                    echo $this->paginationControl($hotelSummary, 'Sliding', 'expedia/index-pagination-flickr.phtml'); 	 
+                ?>
+            </div>
+			<?php
+            }
+			
+			
+		
+		}
+	?>
+</div>
+
+<div id="dialog_container"></div>
